@@ -1,0 +1,140 @@
+\documentclass[a4paper,english]{elsarticle}% 5p gir 2 kolonner pr side. 1p gir 1 kolonne pr side.
+%\documentclass[11pt,a4paper,norsk]{article} % setter hvilken type dokument. Kan også være book eller report. I klammeparantes settes fontstørrelse, papirstørrelse og språk.
+
+\usepackage[utf8]{inputenc} %- Løser problem med å skrive andre enn engelske bokstaver f.eks æ,ø,å.
+
+\usepackage[T1]{fontenc} %- Støtter koding av forskjellige fonter.
+\usepackage{lmodern}
+\usepackage{textcomp} % Støtter bruk av forskjellige fonter som dollartegn, copyright, en kvart, en halv mm, se http://gcp.fcaglp.unlp.edu.ar/_media/integrantes:psantamaria:latex:textcomp.pdf
+
+\usepackage{url} % Gjør internett- og e-mail adresser klikkbare i tex-dokumentet.
+
+\usepackage{hyperref} % Gjør referansene i tex-dokumentet klikkbare, slik at du kommer til referansen i referanselista.
+
+\usepackage[english]{babel} % Ordbok. Hvis man setter norsk i options til usepackage babel kan man bruke norske ord.
+
+\usepackage{natbib}
+\bibliographystyle{unsrtnat}
+
+\urlstyle{sf} % Velger hvilken stil url-adresser skrives, f.eks sf
+
+\usepackage{graphicx} % Brukes for å sette inn bilder eller figurer
+\usepackage{amsmath} 				% Ekstra matematikkfunksjoner.
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{tikz-cd}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{changepage}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{bm}
+\usepackage{physics}
+
+
+
+\usepackage{siunitx}					% Må inkluderes for blant annet å få tilgang til kommandoen \SI (korrekte måltall med enheter)
+	\sisetup{exponent-product = \cdot}      	% Prikk som multiplikasjonstegn (i steden for kryss).
+ 	\sisetup{output-decimal-marker  =  {,}} 	% Komma som desimalskilletegn (i steden for punktum).
+ 	\sisetup{separate-uncertainty = true}   	% Pluss-minus-form på usikkerhet (i steden for parentes). 
+
+\usepackage{booktabs} % For å få tilgang til finere linjer (til bruk i tabeller og slikt).
+
+\usepackage[font=small,labelfont=bf]{caption}		% For justering av figurtekst og tabelltekst.
+
+
+\journal{ }
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\ps@pprintTitle}
+  {Preprint submitted to}
+  {}
+  {}{}
+\makeatother
+% Fjerner submitte dto 
+
+% math stuff
+\newcommand{\restr}[2]{\ensuremath{\left.#1\right|_{#2}}}
+
+% my personal commands
+\newcommand{\R}{\mathbb{R}}
+
+% Denne setter navnet på abstract til Sammendrag
+%\renewenvironment{abstract}{\global\setbox\absbox=\vbox\bgroup
+%\hsize=\textwidth\def\baselinestretch{1}%
+%\noindent\unskip\textbf{Sammendrag}
+%\par\medskip\noindent\unskip\ignorespaces}
+%{\egroup}
+
+%\clearpage % Bruk denne kommandoen dersom du vil ha ny side etter det er satt plass til figuren.
+% Disse kommandoene kan gjøre det enklere for LaTeX å plassere figurer og tabeller der du ønsker.
+\setcounter{totalnumber}{5}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.35}
+
+
+% math stuff
+\newtheorem{theorem}{Theorem}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem*{observation}{Observation}
+\newtheorem*{example}{Example}
+\newtheorem*{remark}{Remark}
+
+\graphicspath{{../}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Project}
+
+\author[matematikk]{Alexander Johan Arntzen }
+
+\address[matematikk]{Department of Mathematical Science, Norwegian University of Science and Technology, N-7491 Trondheim, Norway.}
+
+
+\begin{abstract}
+sdfsdf
+The solutions are compared to the analytical solutions and for the elasticity problem the numerical convergence rate is reported.
+\end{abstract}
+
+\end{frontmatter}
+
+
+
+\begin{figure}[ht]
+    \begin{subfigure}[t]{1\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/DFSADF.pdf}
+    \caption{The generated mesh for a disc with 16, 64 and 256 nodes. }
+    \label{plot-meshes}
+    \end{subfigure}\qquad
+    \begin{subfigure}[b]{1\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/DFSADF.pdf}
+    \caption{The generated mesh for a square plate with 4, 8 and 16 nodes in one spatial direction.}
+    \label{plot-meshes-plate}
+    \end{subfigure}
+    \label{meshes}
+    \caption{Meshes for solving the Poission problem and the elasicity equation.}
+\end{figure}
+
+
+
+
+\bibliography{ref}
+
+\end{document}
+
+
