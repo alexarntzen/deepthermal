@@ -1,4 +1,4 @@
-# FiniteElementProject
+# Deepthermal
 Project for 401-4656-21L Deep Learning in Scientific Computing FS2021 at ETH Zürich. 
 
 This group members for this project are: 
