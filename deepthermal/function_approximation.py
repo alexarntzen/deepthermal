@@ -59,7 +59,9 @@ def print_model_errors(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
         print(f"Model {i} val error: {avg_error * 100}%")
 
+
 print_model_errors()
+
 
 # plot visualization
 def plot_models(model_number_list, models=models, plot_name="vis_model"):
@@ -73,7 +75,7 @@ def plot_models(model_number_list, models=models, plot_name="vis_model"):
             axs[k_].scatter(x_train[:, 0], y_train[:, 0], label="tf0_train")
             # axs.scatter(x_train, y_train[:,1], label="ts0")
 
-            axs[k_].plot(x_test, model_k(x_test).detach(), label=f"tf0_pred", lw=2, color="black", )
+            axs[k_].plot(x_test, model_k(x_test).detach(), label=f"tf0_pred", lw=2, ls="-.", color="black", )
 
             axs[k_].set_xlabel("t")
             axs[k_].set_ylabel("T")
