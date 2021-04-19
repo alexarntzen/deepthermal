@@ -18,7 +18,7 @@ def k_fold_CV_grid(Model, model_param_iter, fit, training_param_iter, x, y, k=5,
     models = []
     rel_train_errors = []
     rel_val_errors = []
-    for model_num, (model_param, training_param) in enumerate(zip(model_param_iter, training_param_iter)):
+    for model_num, (model_param, training_param) in enumerate(itertools.product(model_param_iter, training_param_iter)):
         kf = KFold(n_splits=k, shuffle=True)
         rel_train_errors_k = []
         rel_val_errors_k = []
