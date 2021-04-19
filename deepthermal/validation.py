@@ -1,5 +1,4 @@
 import torch
-
 import torch.utils
 import torch.utils.data
 import itertools
@@ -25,7 +24,7 @@ def k_fold_CV_grid(Model, model_param_iter, fit, training_param_iter, x, y, k=5,
         rel_val_errors_k = []
         models_k = []
         for k_num, (train_index, val_index) in enumerate(kf.split(x)):
-            if verbose: print(f"Running model (mod={model_num},k={k_num}):")
+            if verbose: print(f"Running model (mod={model_num},k={k_num})")
             x_train_k, x_val_k = x[train_index], x[val_index]
             y_train_k, y_val_k = y[train_index], y[val_index]
 

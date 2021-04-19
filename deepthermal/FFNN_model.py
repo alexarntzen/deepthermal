@@ -4,10 +4,7 @@ import torch.optim as optim
 import torch.utils
 import torch.utils.data
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib as mpl
-import itertools
 
 # GLOBAL VARIABLES
 ADAM_LR = 0.001
@@ -20,9 +17,9 @@ activations = {
 }
 
 
-class NeuralNet(nn.Module):
+class FFNN(nn.Module):
     def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, activation="relu", **kwargs):
-        super(NeuralNet, self).__init__()
+        super(FFNN, self).__init__()
 
         # Number of input dimensions n
         self.input_dimension = input_dimension
@@ -43,7 +40,7 @@ class NeuralNet(nn.Module):
 
         # loss history
         self.loss_history_val = []
-        self.loss_history_training = []
+        self.loss_history_train = []
 
     def forward(self, x):
         # The forward function performs the set of affine and non-linear transformations defining the network
@@ -87,8 +84,9 @@ def regularization(model, p):
     return reg_loss
 
 
-def fit_nn(model, x_train, y_train, num_epochs,batch_size, optimizer, p=2, regularization_param=0, regularization_exp=2, x_val=None,
-           y_val_=None, track_history=True, verbose=False, **kwargs):
+def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, regularization_param=0,
+             regularization_exp=2, x_val=None,
+             y_val=None, track_history=True, verbose=False, **kwargs):
     training_set = DataLoader(torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size,
                               shuffle=True)
     # select optimizer
@@ -104,7 +102,7 @@ def fit_nn(model, x_train, y_train, num_epochs,batch_size, optimizer, p=2, regul
     for epoch in range(num_epochs):
         if verbose: print("################################ ", epoch, " ################################")
         if track_history:
-            model.loss_history_training.append(0)
+            model.loss_history_train.append(0)
 
         # Loop over batches
         for j, (x_train_, u_train_) in enumerate(training_set):
@@ -120,24 +118,24 @@ def fit_nn(model, x_train, y_train, num_epochs,batch_size, optimizer, p=2, regul
 
                 # Compute average training loss over batches for the current epoch
                 if track_history:
-                    model.loss_history_training[-1] += loss.item() / len(training_set)
+                    model.loss_history_train[-1] += loss.item() / len(training_set)
                 return loss
 
             optimizer_.step(closure=closure)
 
         # record validation loss for history
-        if y_val_ is not None and track_history:
+        if y_val is not None and track_history:
             y_val_pred_ = model(x_val)
-            validation_loss = torch.mean((y_val_pred_.reshape(-1, ) - y_val_.reshape(-1, )) ** p).item()
-            model.loss_history_val(validation_loss)
+            validation_loss = torch.mean((y_val_pred_.reshape(-1, ) - y_val.reshape(-1, )) ** p).item()
+            model.loss_history_val.append(validation_loss)
 
         if verbose and track_history:
-            print('Training Loss: ', np.round(model.loss_history_training[-1], 8))
-            if y_val_ is not None: print('Validation Loss: ', np.round(validation_loss, 8))
+            print('Training Loss: ', np.round(model.loss_history_train[-1], 8))
+            if y_val is not None: print('Validation Loss: ', np.round(validation_loss, 8))
 
     if verbose and track_history:
-        print('Final Training Loss: ', np.round(model.loss_history_training[-1], 8))
-        if y_val_ is not None: print('Final Validation Loss: ', np.round(model.loss_history_val[-1], 8))
+        print('Final Training Loss: ', np.round(model.loss_history_train[-1], 8))
+        if y_val is not None: print('Final Validation Loss: ', np.round(model.loss_history_val[-1], 8))
 
     return
 
@@ -146,9 +144,9 @@ def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=No
     input_dimension = x_train.shape[1]
     output_dimension = y_train.shape[1]
 
-    nn_model = NeuralNet(input_dimension, output_dimension, **model_param)
+    nn_model = FFNN(input_dimension, output_dimension, **model_param)
     # Xavier weight initialization
     init_xavier(nn_model, model_param["init_weight_seed"])
 
-    fit_nn(nn_model, x_train, y_train, **training_param, x_val=x_val, y_val=y_val)
+    fit_FFNN(nn_model, x_train, y_train, **training_param, x_val=x_val, y_val=y_val)
     return nn_model

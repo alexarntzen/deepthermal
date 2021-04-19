@@ -6,7 +6,7 @@ import torch.utils.data
 
 import numpy as np
 
-from deepthermal.nn_model import get_trained_nn_model, NeuralNet, fit_nn, init_xavier
+from deepthermal.FFNN_model import get_trained_nn_model, FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import create_subdictionary_iterator, get_rMSE, k_fold_CV_grid
 
 model_params = {
@@ -67,7 +67,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "input_dimension": [1],
             "output_dimension": [1],
             "n_hidden_layers": [2],
-            "neurons": [10, 20],
+            "neurons": [20, 30],
             "activation": ["relu", "tanh"],
             "init_weight_seed": [20]
         }
@@ -82,10 +82,10 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(NeuralNet, model_params_iterator, fit_nn,
+        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
                                                                   training_params_iterator, self.x, self.y,
                                                                   init=init_xavier,
-                                                                  k=5)
+                                                                  k=3)
 
         self.assertAlmostEqual(0, np.max(rel_train_errors), delta=0.01)
         self.assertAlmostEqual(0, np.max(rel_val_errors), delta=0.01)
@@ -115,11 +115,10 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(NeuralNet, model_params_iterator, fit_nn,
+        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
                                                                   training_params_iterator, self.x, self.y,
                                                                   init=init_xavier,
                                                                   k=5, partial=True)
-        print(rel_train_errors)
         self.assertAlmostEqual(0, np.max(rel_train_errors), delta=0.01)
         self.assertAlmostEqual(0, np.max(rel_val_errors), delta=0.01)
 
