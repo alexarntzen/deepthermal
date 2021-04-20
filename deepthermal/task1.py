@@ -4,32 +4,30 @@ import numpy as np
 import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator
-
+from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator, get_disc_str, plot_model_history
 ########
-PATH_FIGURES = "/Users/alexander/git_repos/git_skole/deepthermal/figures"
-PATH_TRAINING_DATA = "/Users/alexander/git_repos/git_skole/deepthermal/Task1/TrainingData.txt"
-PATH_TESTING_POINTS = "/Users/alexander/git_repos/git_skole/deepthermal/Task1/TestingData.txt"
+PATH_FIGURES = "../figures"
+PATH_TRAINING_DATA = "../Task1/TrainingData.txt"
+PATH_TESTING_POINTS = "../Task1/TestingData.txt"
 
-SET_NAME = "2d_wide_relu_1"
-MODEL_LIST = [0, ]
+SET_NAME = "2d_wide_relu_3"
+MODEL_LIST = [0,1,]
 
 model_params = {
     "input_dimension": [1],
     "output_dimension": [2],
     "n_hidden_layers": [5],
-    "neurons": [200],
+    "neurons": [250],
     "activation": ["relu"],
     "init_weight_seed": [25]
 }
 training_params = {
-    "num_epochs": [2000],
-    "batch_size": [265 // 8],
+    "num_epochs": [4000],
+    "batch_size": [265 // 4],
     "regularization_exp": [2],
     "regularization_param": [1e-4],
     "optimizer": ["ADAM"],
 }
-
 #########
 
 # Data frame with data
@@ -66,14 +64,11 @@ def print_model_errors(rel_val_errors):
         print(f"Model {i} validation error: {avg_error * 100}%")
 
 
-def get_disc_str(model):
-    params = {"activation": model.activation, "n_hidden_layers": model.n_hidden_layers, "neurons": model.neurons,
-              "epochs": len(model.loss_history_train)}
-    return str(params)
+
 
 
 # plot visualization
-def plot_models(model_number_list, models=models, plot_name="vis_model"):
+def plot_models(model_number_list, models=models, plot_name="vis_model", ):
     k = len(models[0])
     # num_models = len(model_number_list)
     for model_number in model_number_list:
@@ -97,19 +92,6 @@ def plot_models(model_number_list, models=models, plot_name="vis_model"):
         plt.close(fig)
 
 
-def plot_model_history(model, model_name="0"):
-    histfig, ax = plt.subplots()
-    ax.grid(True, which="both", ls=":")
-    ax.plot(np.arange(1, len(model.loss_history_train) + 1), model.loss_history_train, label="Training error history")
-    ax.plot(np.arange(1, len(model.loss_history_val) + 1), model.loss_history_val, label="Validation error history")
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Error")
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.legend()
-    histfig.suptitle(f"History, model: {get_disc_str(model)}")
-    histfig.savefig(f"{PATH_FIGURES}/history_{model_name}.pdf")
-    plt.close(histfig)
 
 
 print_model_errors(rel_val_errors)
@@ -117,13 +99,4 @@ plot_models(MODEL_LIST, models, "result_" + SET_NAME)
 for i in MODEL_LIST:
     plot_model_history(model=models[i][0], model_name=(SET_NAME + f"{i}"))
 
-chosen_network_properties = {
-    "hidden_layers": 4,
-    "neurons": 20,
-    "regularization_exp": 2,
-    "regularization_param": 1e-4,
-    "batch_size": 32,
-    "epochs": 1000,
-    "optimizer": "ADAM",
-    "init_weight_seed": 25
-}
+

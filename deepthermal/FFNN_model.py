@@ -141,10 +141,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
 
 
 def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=None, y_val=None):
-    input_dimension = x_train.shape[1]
-    output_dimension = y_train.shape[1]
-
-    nn_model = FFNN(input_dimension, output_dimension, **model_param)
+    nn_model = FFNN(**model_param)
     # Xavier weight initialization
     init_xavier(nn_model, model_param["init_weight_seed"])
 
