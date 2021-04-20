@@ -62,7 +62,9 @@ def plot_model_history(model, model_name="0", path_figures="../figures"):
     ax.grid(True, which="both", ls=":")
     ax.plot(torch.arange(1, len(model.loss_history_train) + 1), model.loss_history_train,
             label="Training error history")
-    ax.plot(torch.arange(1, len(model.loss_history_val) + 1), model.loss_history_val, label="Validation error history")
+    if len(model.loss_history_val) > 0:
+        ax.plot(torch.arange(1, len(model.loss_history_val) + 1), model.loss_history_val,
+                label="Validation error history")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Error")
     ax.set_xscale("log")
