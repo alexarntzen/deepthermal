@@ -10,8 +10,8 @@ def get_rMSE(model, x, y, type_str="", verbose=False):
     # Compute the relative mean square error
     y_pred = model(x)
     relative_error = torch.mean((y_pred - y) ** 2) / torch.mean(y ** 2)
-    if verbose: print(f"Relative {type_str} error: ", relative_error.detach().numpy() ** 0.5 * 100, "%")
-    return relative_error.detach().numpy()
+    if verbose: print(f"Relative {type_str} error: ", relative_error.item() ** 0.5 * 100, "%")
+    return relative_error.item()
 
 
 def k_fold_CV_grid(Model, model_param_iter, fit, training_param_iter, x, y, k=5, init=None, partial=False,
@@ -30,7 +30,7 @@ def k_fold_CV_grid(Model, model_param_iter, fit, training_param_iter, x, y, k=5,
             y_train_k, y_val_k = y[train_index], y[val_index]
 
             model = Model(**model_param)
-            if init is not None: init(model, **model_param)
+            if init is not None: init(model, **training_param)
 
             fit(model, x_train_k, y_train_k, **training_param, x_val=x_val_k, y_val=y_val_k)
             models_k.append(model)
@@ -61,13 +61,12 @@ def plot_model_history(model, model_name="0", path_figures="../figures"):
     histfig, ax = plt.subplots()
     ax.grid(True, which="both", ls=":")
     ax.plot(torch.arange(1, len(model.loss_history_train) + 1), model.loss_history_train,
-            label="Training error history")
+            label="Training error history",)
     if len(model.loss_history_val) > 0:
         ax.plot(torch.arange(1, len(model.loss_history_val) + 1), model.loss_history_val,
                 label="Validation error history")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Error")
-    ax.set_xscale("log")
     ax.set_yscale("log")
     ax.legend()
     histfig.suptitle(f"History, model: {get_disc_str(model)}")
