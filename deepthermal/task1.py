@@ -8,15 +8,15 @@ from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator
 from deepthermal.task1_model_params import MODEL_PARAMS_tf0, TRAINING_PARAMS_tf0, MODEL_PARAMS_ts0, TRAINING_PARAMS_ts0
 
 ########
-PATH_FIGURES = "../figures/task1"
-PATH_TRAINING_DATA = "../Task1/TrainingData.txt"
-PATH_TESTING_POINTS = "../Task1/TestingData.txt"
-PATH_SUBMISSION = "../alexander_arntzen_yourleginumber/Task1.txt"
+PATH_FIGURES = "figures/task1"
+PATH_TRAINING_DATA = "Task1/TrainingData.txt"
+PATH_TESTING_POINTS = "Task1/TestingData.txt"
+PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task1.txt"
 ########
 
 DATA_COLUMN = "ts0"
-MODEL_LIST = np.arange(1)
-SET_NAME = f"relu_10_{DATA_COLUMN}"
+MODEL_LIST = np.arange(4)
+SET_NAME = f"relu_0_{DATA_COLUMN}"
 
 model_params = MODEL_PARAMS_ts0
 training_params = TRAINING_PARAMS_ts0
