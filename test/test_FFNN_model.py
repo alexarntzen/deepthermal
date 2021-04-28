@@ -71,7 +71,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
                                                                   training_params_iterator, self.x, self.y,
                                                                   init=init_xavier,
-                                                                  k=3)
+                                                                  folds=3)
         avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.02)
 
@@ -103,7 +103,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
                                                                   training_params_iterator, self.x, self.y,
                                                                   init=init_xavier,
-                                                                  k=5, partial=True)
+                                                                  folds=5, partial=True)
 
         avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.02)

@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator, get_disc_str, plot_model_history
+from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator
+from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_1d
 from deepthermal.task1_model_params import MODEL_PARAMS_tf0, TRAINING_PARAMS_tf0, MODEL_PARAMS_ts0, TRAINING_PARAMS_ts0
 
 ########
@@ -14,38 +15,13 @@ PATH_TESTING_POINTS = "Task1/TestingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task1.txt"
 ########
 
-DATA_COLUMN = "ts0"
-MODEL_LIST = np.arange(4)
-SET_NAME = f"relu_0_{DATA_COLUMN}"
+DATA_COLUMN = "tf0"
+MODEL_LIST = np.arange(1)
+SET_NAME = f"relu_1_{DATA_COLUMN}"
+FOLDS = 10
 
-model_params = MODEL_PARAMS_ts0
-training_params = TRAINING_PARAMS_ts0
-
-# Data frame with data
-df_train = pd.read_csv(PATH_TRAINING_DATA, dtype=np.float32)
-df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32)
-
-# Load data
-x_train_ = torch.tensor(df_train[["t"]].values)
-y_train = torch.tensor(df_train[[DATA_COLUMN]].values)
-x_test_ = torch.tensor(df_test[["t"]].values)
-
-# Normalize values
-X_TRAIN_MEAN = torch.mean(x_train_)
-X_TRAIN_STD = torch.std(x_train_)
-x_train = (x_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
-x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-
-# Number of training samples
-n_samples = len(df_train.index)
-
-model_params_iter = create_subdictionary_iterator(model_params)
-training_params_iter = create_subdictionary_iterator(training_params)
-
-models, rel_training_error, rel_val_errors = k_fold_CV_grid(Model=FFNN, model_param_iter=model_params_iter,
-                                                            fit=fit_FFNN, training_param_iter=training_params_iter,
-                                                            x=x_train, y=y_train, init=init_xavier, partial=False,
-                                                            verbose=True)
+model_params = MODEL_PARAMS_tf0
+training_params = TRAINING_PARAMS_tf0
 
 
 ## printing model errors
@@ -56,7 +32,7 @@ def print_model_errors(rel_val_errors):
 
 
 # plot visualization
-def plot_models(model_number_list, models=models, plot_name="vis_model", ):
+def plot_models(model_number_list, models, plot_name="vis_model", ):
     k = len(models[0])
     # num_models = len(model_number_list)
     for model_number in model_number_list:
@@ -77,11 +53,11 @@ def plot_models(model_number_list, models=models, plot_name="vis_model", ):
         plt.close(fig)
 
 
-def plot_result():
+def plot_result(models):
     print_model_errors(rel_val_errors)
     plot_models(MODEL_LIST, models, "result_" + SET_NAME)
     for i in MODEL_LIST:
-        plot_model_history(model=models[i][0], model_name=(SET_NAME + f"_{i}"), path_figures=PATH_FIGURES)
+        plot_model_history(models=models[i], plot_name=(SET_NAME + f"_{i}"), path_figures=PATH_FIGURES)
 
 
 def make_submission(model):
@@ -93,4 +69,33 @@ def make_submission(model):
     df_test.to_csv(PATH_SUBMISSION, index=False)
 
 
+if __name__ == "__main__":
+    # Data frame with data
+    df_train = pd.read_csv(PATH_TRAINING_DATA, dtype=np.float32)
+    df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32)
+
+    # Load data
+    x_train_ = torch.tensor(df_train[["t"]].values)
+    y_train = torch.tensor(df_train[[DATA_COLUMN]].values)
+    x_test_ = torch.tensor(df_test[["t"]].values)
+
+    # Normalize values
+    X_TRAIN_MEAN = torch.mean(x_train_)
+    X_TRAIN_STD = torch.std(x_train_)
+    x_train = (x_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
+    x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
+
+    # Number of training samples
+    n_samples = len(df_train.index)
+
+    model_params_iter = create_subdictionary_iterator(model_params)
+    training_params_iter = create_subdictionary_iterator(training_params)
+
+    models, rel_training_error, rel_val_errors = k_fold_CV_grid(Model=FFNN, model_param_iter=model_params_iter,
+                                                                fit=fit_FFNN, training_param_iter=training_params_iter,
+                                                                x=x_train, y=y_train, init=init_xavier, partial=False,
+                                                                folds=FOLDS, verbose=True)
+
+# functions to make
+# plot_result(models)
 # plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)
