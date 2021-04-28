@@ -7,8 +7,11 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 # GLOBAL VARIABLES
-ADAM_LR = 0.001
-LBFGS_LR = 0.1
+
+larning_rates = {
+    'ADAM': 0.001,
+    'LBFGS': 0.1
+}
 
 activations = {
     'relu': nn.ReLU(),
@@ -63,8 +66,9 @@ def NeuralNet_Seq(input_dimension, output_dimension, n_hidden_layers, neurons):
     return model
 
 
-def init_xavier(model, init_weight_seed, **kwargs):
-    torch.manual_seed(init_weight_seed)
+def init_xavier(model, init_weight_seed=None, **kwargs):
+    if init_weight_seed is not None:
+        torch.manual_seed(init_weight_seed)
 
     def init_weights(m):
         if type(m) == nn.Linear and m.weight.requires_grad and m.bias.requires_grad:
@@ -86,14 +90,16 @@ def regularization(model, p):
 
 def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, regularization_param=0,
              regularization_exp=2, x_val=None,
-             y_val=None, track_history=True, verbose=False, **kwargs):
+             y_val=None, track_history=True, verbose=False, learning_rate=None, **kwargs):
     training_set = DataLoader(torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size,
                               shuffle=True)
+    if learning_rate is None:
+        learning_rate = larning_rates[optimizer]
     # select optimizer
     if optimizer == "ADAM":
-        optimizer_ = optim.Adam(model.parameters(), lr=ADAM_LR)
+        optimizer_ = optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer == "LBFGS":
-        optimizer_ = optim.LBFGS(model.parameters(), lr=LBFGS_LR, max_iter=1, max_eval=50000,
+        optimizer_ = optim.LBFGS(model.parameters(), lr=learning_rate, max_iter=1, max_eval=50000,
                                  tolerance_change=1.0 * np.finfo(float).eps)
     else:
         raise ValueError("Optimizer not recognized")
@@ -111,7 +117,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
                 optimizer_.zero_grad()
                 # forward + backward + optimize
                 u_pred_ = model(x_train_)
-                loss_u = torch.mean((u_pred_.reshape(-1, ) - u_train_.reshape(-1, )) ** p)
+                loss_u = torch.mean((u_pred_ - u_train_) ** p)
                 loss_reg = regularization(model, regularization_exp)
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward()
@@ -126,7 +132,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
         # record validation loss for history
         if y_val is not None and track_history:
             y_val_pred_ = model(x_val)
-            validation_loss = torch.mean((y_val_pred_.reshape(-1, ) - y_val.reshape(-1, )) ** p).item()
+            validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
             model.loss_history_val.append(validation_loss)
 
         if verbose and track_history:
@@ -143,7 +149,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
 def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=None, y_val=None):
     nn_model = FFNN(**model_param)
     # Xavier weight initialization
-    init_xavier(nn_model, model_param["init_weight_seed"])
+    init_xavier(nn_model, **training_param)
 
     fit_FFNN(nn_model, x_train, y_train, **training_param, x_val=x_val, y_val=y_val)
     return nn_model
