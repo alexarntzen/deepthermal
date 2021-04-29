@@ -17,7 +17,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        n_samples = 100
+        n_samples = 1000
         sigma = 0.0
 
         cls.x = 2 * np.pi * torch.rand((n_samples, 1))
@@ -35,17 +35,17 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         }
         training_params = {
             "num_epochs": 1000,
-            "batch_size": 20,
+            "batch_size": 500,
             "regularization_exp": 2,
             "regularization_param": 1e-4,
             "optimizer": "ADAM",
-            "init_weight_seed": 20
+            "init_weight_seed": 10
         }
 
         model = get_trained_nn_model(model_params, training_params, self.x, self.y)
 
         rel_test_error = get_rMSE(model, self.x_test, self.y_test)
-        self.assertAlmostEqual(0, rel_test_error, delta=0.02)
+        self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
     def test_k_fold_CV_grid(self):
         model_params = {
@@ -57,11 +57,11 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         }
         training_params = {
             "num_epochs": [1000],
-            "batch_size": [20],
+            "batch_size": [500],
             "regularization_exp": [2],
             "regularization_param": [1e-4],
             "optimizer": ["ADAM"],
-            "init_weight_seed": [20]
+            "init_weight_seed": [10]
 
         }
 
@@ -73,12 +73,12 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
                                                                   init=init_xavier,
                                                                   folds=3)
         avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
-        self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.02)
+        self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.01)
 
         for submodels in models:
             for model in submodels:
                 rel_test_error = get_rMSE(model, self.x_test, self.y_test)
-                self.assertAlmostEqual(0, rel_test_error, delta=0.02)
+                self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
     def test_k_fold_CV_grid_partial(self):
         model_params = {
@@ -90,7 +90,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         }
         training_params = {
             "num_epochs": [1000],
-            "batch_size": [20],
+            "batch_size": [500],
             "regularization_exp": [2],
             "regularization_param": [1e-4],
             "optimizer": ["ADAM"],
@@ -106,12 +106,13 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
                                                                   folds=5, partial=True)
 
         avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
-        self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.02)
+        self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.01)
 
         for submodels in models:
             for model in submodels:
                 rel_test_error = get_rMSE(model, self.x_test, self.y_test)
-                self.assertAlmostEqual(0, rel_test_error, delta=0.02)
+                self.assertAlmostEqual(0, rel_test_error, delta=0.01)
+
 
 if __name__ == '__main__':
     unittest.main()
