@@ -4,7 +4,6 @@
 \usepackage[utf8]{inputenc} %- Løser problem med å skrive andre enn engelske bokstaver f.eks æ,ø,å.
 
 \usepackage[T1]{fontenc} %- Støtter koding av forskjellige fonter.
-\usepackage{lmodern}
 \usepackage{textcomp} % Støtter bruk av forskjellige fonter som dollartegn, copyright, en kvart, en halv mm, se http://gcp.fcaglp.unlp.edu.ar/_media/integrantes:psantamaria:latex:textcomp.pdf
 
 \usepackage{url} % Gjør internett- og e-mail adresser klikkbare i tex-dokumentet.
@@ -18,7 +17,6 @@
 
 \urlstyle{sf} % Velger hvilken stil url-adresser skrives, f.eks sf
 
-\usepackage{graphicx} % Brukes for å sette inn bilder eller figurer
 \usepackage{amsmath} 				% Ekstra matematikkfunksjoner.
 \usepackage{amssymb}
 \usepackage{amsfonts}
@@ -27,7 +25,6 @@
 \usepackage{mathtools}
 \usepackage{geometry}
 \usepackage{tikz-cd}
-\usepackage{bm}
 \usepackage{graphicx}
 \usepackage{changepage}
 \usepackage{subcaption}
@@ -105,34 +102,23 @@
 
 
 \begin{abstract}
-sdfsdf
-The solutions are compared to the analytical solutions and for the elasticity problem the numerical convergence rate is reported.
+Test
 \end{abstract}
 
 \end{frontmatter}
 
+\begin{equation}
+    \sigma = \int_{[-1,-1]}{|\frac{X(g)}{\overline{X_0}}-1\!\!1|\,dg} \sim \frac{||-1,1]|}{N} \sum_{i=1}^{N}{|\frac{X(G_i)}{\overline{X_0}}-1|}
+    \label{eq:equation}
+\end{equation}
+
+\begin{equation}
+    X_o = \int_{[-1,-1]}{X(g)\,dg} \sim \frac{||-1,1]|}{N} \sum_{i=1}^{N}{X(G_i)}
+    \label{eq:equation}
+\end{equation}
 
 
-\begin{figure}[ht]
-    \begin{subfigure}[t]{1\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/DFSADF.pdf}
-    \caption{The generated mesh for a disc with 16, 64 and 256 nodes. }
-    \label{plot-meshes}
-    \end{subfigure}\qquad
-    \begin{subfigure}[b]{1\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/DFSADF.pdf}
-    \caption{The generated mesh for a square plate with 4, 8 and 16 nodes in one spatial direction.}
-    \label{plot-meshes-plate}
-    \end{subfigure}
-    \label{meshes}
-    \caption{Meshes for solving the Poission problem and the elasicity equation.}
-\end{figure}
-
-
-
-
+\cite{kingma2017adam}
 \bibliography{ref}
 
 \end{document}

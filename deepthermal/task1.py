@@ -53,7 +53,7 @@ def plot_models(model_number_list, models, plot_name="vis_model", **kwargs):
         plt.close(fig)
 
 
-def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors,**kwargs):
+def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, **kwargs):
     print_model_errors(rel_val_errors)
     plot_models(MODEL_LIST, models, "result_" + SET_NAME)
     for i in MODEL_LIST:
@@ -104,5 +104,5 @@ if __name__ == "__main__":
                                 verbose=True)
 
 # functions to make
-# plot_result(**plot_models)
+# plot_result(**cv_results)
 # plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)

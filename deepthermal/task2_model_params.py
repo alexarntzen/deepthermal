@@ -3,7 +3,7 @@ MODEL_PARAMS_cf = {
     "input_dimension": [8],
     "output_dimension": [1],
     "n_hidden_layers": [10],
-    "neurons": [220],
+    "neurons": [40],
     "activation": ["relu"],
 }
 TRAINING_PARAMS_cf = {

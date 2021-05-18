@@ -5,9 +5,10 @@ import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
-from deepthermal.plotting import get_disc_str, plot_model_history
+from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_scatter
 from deepthermal.task2_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
 
+# Path data
 ########
 PATH_FIGURES = "figures/task2"
 PATH_TRAINING_DATA = "Task2/TrainingData_1601.txt"
@@ -15,10 +16,13 @@ PATH_TESTING_POINTS = "Task2/TestingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task2.txt"
 ########
 
-DATA_COLUMN = "tf0"
+# Vizualization and validation parameters
+########
+DATA_COLUMN = "cf"
 MODEL_LIST = np.arange(1)
 SET_NAME = f"initial_1_{DATA_COLUMN}"
 FOLDS = 5
+#########
 
 model_params = MODEL_PARAMS_cf
 training_params = TRAINING_PARAMS_cf
@@ -34,43 +38,23 @@ def print_model_errors(rel_val_errors, **kwargs):
         print(f"Model {i} validation error: {avg_error * 100}%")
 
 
-# plot visualization
-def plot_models(model_number_list, models, plot_name="vis_model", **kwargs):
-    k = len(models[0])
-    # num_models = len(model_number_list)
-    for model_number in model_number_list:
-        fig, axs = plt.subplots(1, k, figsize=(8 * k, 6))
-        fig.suptitle(f"Model: {get_disc_str(models[model_number][0])}")
-
-        for k_, ax in enumerate(fig.axes):
-            ax.scatter(x_train[:, 0], y_train[:, 0], label=f"{DATA_COLUMN}_train")
-
-            ax.plot(x_test, models[model_number][k_](x_test)[:, 0].detach(), label=f"{DATA_COLUMN}_pred", lw=2, ls="-.",
-                    color="black", )
-
-            ax.set_xlabel("t")
-            ax.set_ylabel("T")
-            ax.legend()
-
-        fig.savefig(f"{PATH_FIGURES}/{plot_name}_{model_number}.pdf")
-        plt.close(fig)
-
-
-def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, **kwargs):
+def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, x_test, x_train, y_train, **kwargs):
     print_model_errors(rel_val_errors)
-    plot_models(MODEL_LIST, models, "result_" + SET_NAME)
     for i in MODEL_LIST:
         plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=(SET_NAME + f"_{i}"),
                            path_figures=PATH_FIGURES)
+        for j in range(len(models[i])):
+            plot_model_scatter(models[i][j], x_test, f"{SET_NAME}_{i}_{j}", x_train, y_train,
+                               path_figures=PATH_FIGURES)
 
 
-def make_submission(model):
-    # Data frame with data
-    df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
-    x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-    y_pred = model(x_test).detach()
-    df_test[DATA_COLUMN] = y_pred[:, 0]
-    df_test.to_csv(PATH_SUBMISSION, index=False)
+# def make_submission(model):
+#     # Data frame with data
+#     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
+#     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
+#     y_pred = model(x_test).detach()
+#     df_test[DATA_COLUMN] = y_pred[:, 0]
+#     df_test.to_csv(PATH_SUBMISSION, index=False)
 
 
 if __name__ == "__main__":
@@ -80,14 +64,23 @@ if __name__ == "__main__":
 
     # Load data
     x_train_ = torch.tensor(df_train.values)[:, :8]
-    y_train = torch.tensor(df_train.values)[:, 8:9]
+    y_train_ = torch.tensor(df_train.values)[:, 8:9]
     x_test_ = torch.tensor(df_test.values)
 
-    # Normalize values
-    X_TRAIN_MEAN = torch.tensor(df_test.mean())[:8]
-    X_TRAIN_STD = torch.tensor(df_test.std())[:8]
-    x_train = (x_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
-    x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
+    # Standardise values
+    X_TRAIN_MEAN = torch.tensor(df_train.mean())[:8]
+    X_TRAIN_STD = torch.tensor(df_train.std())[:8]
+    Y_TRAIN_MEAN = torch.tensor(df_train.mean())[8:9]
+    Y_TRAIN_STD = torch.tensor(df_train.std())[8:9]
+
+    X_0 = X_TRAIN_MEAN
+    SIGMA = torch.mean(torch.abs(x_train_ / X_0 - 1))*2
+
+    # Transformed to G since, G has standard mean and std
+    x_train = (x_train_ / X_0 -1) / SIGMA
+    # Scale G(y) = 2y -1
+    x_test = 2 * x_test_ - 1
+    y_train = (y_train_ - Y_TRAIN_MEAN) / Y_TRAIN_STD
 
     # Number of training samples
     n_samples = len(df_train.index)
@@ -106,6 +99,6 @@ if __name__ == "__main__":
                                 folds=FOLDS,
                                 verbose=True)
 
+    plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
 # functions to make
-# plot_result(models)
-# plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)
+# plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
