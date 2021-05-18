@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import k_fold_CV_grid, create_subdictionary_iterator
+from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_1d
 from deepthermal.task1_model_params import MODEL_PARAMS_tf0, TRAINING_PARAMS_tf0, MODEL_PARAMS_ts0, TRAINING_PARAMS_ts0
 
@@ -25,14 +25,14 @@ training_params = TRAINING_PARAMS_tf0
 
 
 ## printing model errors
-def print_model_errors(rel_val_errors):
+def print_model_errors(rel_val_errors, **kwargs):
     for i, rel_val_error_list in enumerate(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
         print(f"Model {i} validation error: {avg_error * 100}%")
 
 
 # plot visualization
-def plot_models(model_number_list, models, plot_name="vis_model", ):
+def plot_models(model_number_list, models, plot_name="vis_model", **kwargs):
     k = len(models[0])
     # num_models = len(model_number_list)
     for model_number in model_number_list:
@@ -53,11 +53,12 @@ def plot_models(model_number_list, models, plot_name="vis_model", ):
         plt.close(fig)
 
 
-def plot_result(models):
+def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors,**kwargs):
     print_model_errors(rel_val_errors)
     plot_models(MODEL_LIST, models, "result_" + SET_NAME)
     for i in MODEL_LIST:
-        plot_model_history(models=models[i], plot_name=(SET_NAME + f"_{i}"), path_figures=PATH_FIGURES)
+        plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=(SET_NAME + f"_{i}"),
+                           path_figures=PATH_FIGURES)
 
 
 def make_submission(model):
@@ -91,11 +92,17 @@ if __name__ == "__main__":
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
-    models, rel_training_error, rel_val_errors = k_fold_CV_grid(Model=FFNN, model_param_iter=model_params_iter,
-                                                                fit=fit_FFNN, training_param_iter=training_params_iter,
-                                                                x=x_train, y=y_train, init=init_xavier, partial=False,
-                                                                folds=FOLDS, verbose=True)
+    cv_results = k_fold_cv_grid(Model=FFNN,
+                                model_param_iter=model_params_iter,
+                                fit=fit_FFNN,
+                                training_param_iter=training_params_iter,
+                                x=x_train,
+                                y=y_train,
+                                init=init_xavier,
+                                partial=False,
+                                folds=FOLDS,
+                                verbose=True)
 
 # functions to make
-# plot_result(models)
+# plot_result(**plot_models)
 # plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)

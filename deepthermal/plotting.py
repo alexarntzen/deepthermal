@@ -3,21 +3,21 @@ import torch
 
 
 def get_disc_str(model):
-    params = {"activation": model.activation, "n_hidden_layers": model.n_hidden_layers, "neurons": model.neurons,
-              "epochs": len(model.loss_history_train)}
+    params = {"activation": model.activation, "n_hidden_layers": model.n_hidden_layers, "neurons": model.neurons}
     return str(params)
 
 
-def plot_model_history(models, plot_name="0", path_figures="figures"):
+def plot_model_history(models, loss_history_trains, loss_history_vals=None, plot_name="0", path_figures="figures"):
     k = len(models)
     histfig, axis = plt.subplots(1, k, figsize=(8 * k, 6))
+    if len(axis) == 1: axis = [axis]
     for i, model in enumerate(models):
         axis[i].grid(True, which="both", ls=":")
-        axis[i].plot(torch.arange(1, len(model.loss_history_train) + 1), model.loss_history_train,
-                label="Training error history", )
-        if len(model.loss_history_val) > 0:
-            axis[i].plot(torch.arange(1, len(model.loss_history_val) + 1), model.loss_history_val,
-                    label="Validation error history")
+        axis[i].plot(torch.arange(1, len(loss_history_trains[i]) + 1), loss_history_trains[i],
+                     label="Training error history", )
+        if len(loss_history_vals[i]) is not None:
+            axis[i].plot(torch.arange(1, len(loss_history_vals[i]) + 1), loss_history_vals[i],
+                         label="Validation error history")
         axis[i].set_xlabel("Epoch")
         axis[i].set_ylabel("Error")
         axis[i].set_yscale("log")

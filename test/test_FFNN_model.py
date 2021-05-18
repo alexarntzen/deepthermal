@@ -7,7 +7,7 @@ import torch.utils.data
 import numpy as np
 
 from deepthermal.FFNN_model import get_trained_nn_model, FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import create_subdictionary_iterator, get_rMSE, k_fold_CV_grid
+from deepthermal.validation import create_subdictionary_iterator, get_rMSE, k_fold_cv_grid
 
 
 class TestOnSimpleFunctionApprox(unittest.TestCase):
@@ -42,12 +42,13 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "init_weight_seed": 10
         }
 
-        model = get_trained_nn_model(model_params, training_params, self.x, self.y)
+        model, loss_history_train, loss_history_val = get_trained_nn_model(model_params, training_params, self.x,
+                                                                           self.y)
 
         rel_test_error = get_rMSE(model, self.x_test, self.y_test)
         self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
-    def test_k_fold_CV_grid(self):
+    def test_k_fold_cv_grid(self):
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
@@ -68,19 +69,19 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
-                                                                  training_params_iterator, self.x, self.y,
-                                                                  init=init_xavier,
-                                                                  folds=3)
-        avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
+        cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
+                                    training_params_iterator, self.x, self.y,
+                                    init=init_xavier,
+                                    folds=3)
+        avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]), dim=1)
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.01)
 
-        for submodels in models:
+        for submodels in cv_results["models"]:
             for model in submodels:
                 rel_test_error = get_rMSE(model, self.x_test, self.y_test)
                 self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
-    def test_k_fold_CV_grid_partial(self):
+    def test_k_fold_cv_grid_partial(self):
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
@@ -100,15 +101,15 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        models, rel_train_errors, rel_val_errors = k_fold_CV_grid(FFNN, model_params_iterator, fit_FFNN,
-                                                                  training_params_iterator, self.x, self.y,
-                                                                  init=init_xavier,
-                                                                  folds=5, partial=True)
+        cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
+                                    training_params_iterator, self.x, self.y,
+                                    init=init_xavier,
+                                    folds=5, partial=True)
 
-        avg_rel_val_errors = torch.mean(torch.tensor(rel_val_errors), dim=1)
+        avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]), dim=1)
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.01)
 
-        for submodels in models:
+        for submodels in cv_results["models"]:
             for model in submodels:
                 rel_test_error = get_rMSE(model, self.x_test, self.y_test)
                 self.assertAlmostEqual(0, rel_test_error, delta=0.01)

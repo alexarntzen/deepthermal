@@ -41,10 +41,6 @@ class FFNN(nn.Module):
         self.hidden_layers = nn.ModuleList([nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)])
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
-        # loss history
-        self.loss_history_val = []
-        self.loss_history_train = []
-
     def forward(self, x):
         # The forward function performs the set of affine and non-linear transformations defining the network
         # (see equation above)
@@ -93,6 +89,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
              y_val=None, track_history=True, verbose=False, learning_rate=None, **kwargs):
     training_set = DataLoader(torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size,
                               shuffle=True)
+
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
     # select optimizer
@@ -104,11 +101,11 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
     else:
         raise ValueError("Optimizer not recognized")
 
+    loss_history_train = np.zeros((num_epochs))
+    loss_history_val = np.zeros((num_epochs))
     # Loop over epochs
     for epoch in range(num_epochs):
         if verbose: print("################################ ", epoch, " ################################")
-        if track_history:
-            model.loss_history_train.append(0)
 
         # Loop over batches
         for j, (x_train_, u_train_) in enumerate(training_set):
@@ -124,7 +121,7 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
 
                 # Compute average training loss over batches for the current epoch
                 if track_history:
-                    model.loss_history_train[-1] += loss.item() / len(training_set)
+                    loss_history_train[epoch] += loss.item() / len(training_set)
                 return loss
 
             optimizer_.step(closure=closure)
@@ -133,17 +130,17 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
         if y_val is not None and track_history:
             y_val_pred_ = model(x_val)
             validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
-            model.loss_history_val.append(validation_loss)
+            loss_history_val[epoch] = validation_loss
 
         if verbose and track_history:
-            print('Training Loss: ', np.round(model.loss_history_train[-1], 8))
+            print('Training Loss: ', np.round(loss_history_train[-1], 8))
             if y_val is not None: print('Validation Loss: ', np.round(validation_loss, 8))
 
     if verbose and track_history:
-        print('Final Training Loss: ', np.round(model.loss_history_train[-1], 8))
-        if y_val is not None: print('Final Validation Loss: ', np.round(model.loss_history_val[-1], 8))
+        print('Final Training Loss: ', np.round(loss_history_train[-1], 8))
+        if y_val is not None: print('Final Validation Loss: ', np.round(loss_history_val[-1], 8))
 
-    return
+    return loss_history_train, loss_history_val
 
 
 def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=None, y_val=None):
@@ -151,5 +148,6 @@ def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=No
     # Xavier weight initialization
     init_xavier(nn_model, **training_param)
 
-    fit_FFNN(nn_model, x_train, y_train, **training_param, x_val=x_val, y_val=y_val)
-    return nn_model
+    loss_history_train, loss_history_val = fit_FFNN(nn_model, x_train, y_train, **training_param, x_val=x_val,
+                                                    y_val=y_val)
+    return nn_model, loss_history_train, loss_history_val
