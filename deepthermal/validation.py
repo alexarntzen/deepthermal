@@ -1,19 +1,20 @@
 import torch
 import torch.utils
-import torch.utils.data
+from torch.utils.data import Subset
 import itertools
 from sklearn.model_selection import KFold
 
 
-def get_rMSE(model, x, y, type_str="", verbose=False):
+def get_rMSE(model, data, type_str="", verbose=False):
     # Compute the relative mean square error
-    y_pred = model(x)
-    relative_error = torch.mean((y_pred - y) ** 2) / torch.mean(y ** 2)
+    x_data, y_data = data[:]
+    y_pred = model(x_data)
+    relative_error = torch.mean((y_pred - y_data) ** 2) / torch.mean(y_data ** 2)
     if verbose: print(f"Relative {type_str} error: ", relative_error.item() ** 0.5 * 100, "%")
     return relative_error.item()
 
 
-def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, x, y, folds=5, init=None, partial=False,
+def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, data, folds=5, init=None, partial=False,
                    verbose=False):
     models = []
     loss_history_trains = []
@@ -27,24 +28,23 @@ def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, x, y, fold
         models_k = []
         loss_history_trains_k = []
         loss_history_vals_k = []
-        for k_num, (train_index, val_index) in enumerate(kf.split(x)):
+        for k_num, (train_index, val_index) in enumerate(kf.split(data)):
             if verbose: print(f"Running model (mod={model_num},k={k_num})")
-            x_train_k, x_val_k = x[train_index], x[val_index]
-            y_train_k, y_val_k = y[train_index], y[val_index]
-
+            data_train_k, data_val_k = Subset(data, train_index), Subset(data, val_index)
             model = Model(**model_param)
-            if init is not None: init(model, **training_param)
+            if init is not None:
+                init(model, **training_param)
 
-            loss_history_train, loss_history_val = fit(model, x_train_k, y_train_k, **training_param, x_val=x_val_k,
-                                                       y_val=y_val_k)
+            loss_history_train, loss_history_val = fit(model, **training_param, data=data_train_k, dat_val=data_val_k)
 
             models_k.append(model)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            rel_train_errors_k.append(get_rMSE(model, x_train_k, y_train_k))
-            rel_val_errors_k.append(get_rMSE(model, x_val_k, y_val_k))
+            rel_train_errors_k.append(get_rMSE(model, data_train_k))
+            rel_val_errors_k.append(get_rMSE(model, data_val_k))
 
-            if partial: break
+            if partial:
+                break
 
         models.append(models_k)
         loss_history_trains.append(loss_history_trains_k)

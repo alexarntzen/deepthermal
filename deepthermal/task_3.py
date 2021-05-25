@@ -7,6 +7,7 @@ from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_scatter
 from deepthermal.task3_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
+from deepthermal.forcasting import TimeSeriesDataset
 
 # Path data
 ########
@@ -18,7 +19,7 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task3.txt"
 
 # Vizualization and validation parameters
 ########
-DATA_COLUMN = "cf"
+DATA_COLUMN = "tf0"
 MODEL_LIST = np.arange(1)
 SET_NAME = f"initial_1_{DATA_COLUMN}"
 FOLDS = 5
@@ -59,46 +60,34 @@ def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, 
 
 if __name__ == "__main__":
     # Data frame with data
-    df_train = pd.read_csv(PATH_TRAINING_DATA, dtype=np.float32, sep=" ", header=None)
-    df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32, sep=" ", header=None)
+    df_train = pd.read_csv(PATH_TRAINING_DATA, dtype=np.float32)
+    df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32)
 
     # Load data
-    x_train_ = torch.tensor(df_train.values)[:, :8]
-    y_train_ = torch.tensor(df_train.values)[:, 8:9]
-    x_test_ = torch.tensor(df_test.values)
+    data_train_ = torch.tensor(df_train[[DATA_COLUMN]].values)
+    data_test_ = torch.tensor(df_test[["t"]].values)
 
     # Standardise values
-    X_TRAIN_MEAN = torch.tensor(df_train.mean())[:8]
-    X_TRAIN_STD = torch.tensor(df_train.std())[:8]
-    Y_TRAIN_MEAN = torch.tensor(df_train.mean())[8:9]
-    Y_TRAIN_STD = torch.tensor(df_train.std())[8:9]
+    # Normalize values
+    X_TRAIN_MEAN = torch.mean(data_train_)
+    X_TRAIN_STD = torch.std(data_train_)
+    data_train = (data_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
 
-    X_0 = X_TRAIN_MEAN
-    SIGMA = torch.mean(torch.abs(x_train_ / X_0 - 1))*2
-
-    # Transformed to G since, G has standard mean and std
-    x_train = (x_train_ / X_0 -1) / SIGMA
-    # Scale G(y) = 2y -1
-    x_test = 2 * x_test_ - 1
-    y_train = (y_train_ - Y_TRAIN_MEAN) / Y_TRAIN_STD
-
-    # Number of training samples
-    n_samples = len(df_train.index)
+    data = TimeSeriesDataset(data_train, 32, 32)
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
-    cv_results = k_fold_cv_grid(Model=FFNN,
-                                model_param_iter=model_params_iter,
-                                fit=fit_FFNN,
-                                training_param_iter=training_params_iter,
-                                x=x_train,
-                                y=y_train,
-                                init=init_xavier,
-                                partial=True,
-                                folds=FOLDS,
-                                verbose=True)
+    # cv_results = k_fold_cv_grid(Model=FFNN,
+    #                             model_param_iter=model_params_iter,
+    #                             fit=fit_FFNN,
+    #                             training_param_iter=training_params_iter,
+    #                             data=data,
+    #                             init=init_xavier,
+    #                             partial=True,
+    #                             folds=FOLDS,
+    #                             verbose=True)
 
-    plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
+    # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
 # functions to make
 # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)

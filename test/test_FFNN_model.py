@@ -24,6 +24,8 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         cls.y = cls.exact_solution(cls.x) * (1 + sigma * torch.randn(cls.x.shape))
         cls.x_test = torch.linspace(0, 2 * np.pi, 10000).reshape(-1, 1)
         cls.y_test = cls.exact_solution(cls.x_test)
+        cls.data = torch.utils.data.TensorDataset(cls.x, cls.y)
+        cls.data_test = torch.utils.data.TensorDataset(cls.x_test, cls.y_test)
 
     def test_approx_error(self):
         model_params = {
@@ -42,10 +44,10 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "init_weight_seed": 10
         }
 
-        model, loss_history_train, loss_history_val = get_trained_nn_model(model_params, training_params, self.x,
-                                                                           self.y)
+        model, loss_history_train, loss_history_val = get_trained_nn_model(model_params, training_params,
+                                                                           data=self.data)
 
-        rel_test_error = get_rMSE(model, self.x_test, self.y_test)
+        rel_test_error = get_rMSE(model, self.data_test)
         self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
     def test_k_fold_cv_grid(self):
@@ -70,7 +72,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         training_params_iterator = create_subdictionary_iterator(training_params)
 
         cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
-                                    training_params_iterator, self.x, self.y,
+                                    training_params_iterator, data=self.data,
                                     init=init_xavier,
                                     folds=3)
         avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]), dim=1)
@@ -78,7 +80,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
 
         for submodels in cv_results["models"]:
             for model in submodels:
-                rel_test_error = get_rMSE(model, self.x_test, self.y_test)
+                rel_test_error = get_rMSE(model, self.data_test)
                 self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
     def test_k_fold_cv_grid_partial(self):
@@ -102,7 +104,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         training_params_iterator = create_subdictionary_iterator(training_params)
 
         cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
-                                    training_params_iterator, self.x, self.y,
+                                    training_params_iterator, data=self.data,
                                     init=init_xavier,
                                     folds=5, partial=True)
 
@@ -111,7 +113,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
 
         for submodels in cv_results["models"]:
             for model in submodels:
-                rel_test_error = get_rMSE(model, self.x_test, self.y_test)
+                rel_test_error = get_rMSE(model, self.data_test)
                 self.assertAlmostEqual(0, rel_test_error, delta=0.01)
 
 

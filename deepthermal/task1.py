@@ -1,4 +1,5 @@
-import torch.utils.data
+import torch
+from torch.utils.data import TensorDataset
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -86,8 +87,7 @@ if __name__ == "__main__":
     x_train = (x_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
 
-    # Number of training samples
-    n_samples = len(df_train.index)
+    data = TensorDataset(x_train, y_train)
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
@@ -96,8 +96,7 @@ if __name__ == "__main__":
                                 model_param_iter=model_params_iter,
                                 fit=fit_FFNN,
                                 training_param_iter=training_params_iter,
-                                x=x_train,
-                                y=y_train,
+                                data=data,
                                 init=init_xavier,
                                 partial=False,
                                 folds=FOLDS,

@@ -84,12 +84,9 @@ def regularization(model, p):
     return reg_loss
 
 
-def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, regularization_param=0,
-             regularization_exp=2, x_val=None,
-             y_val=None, track_history=True, verbose=False, learning_rate=None, **kwargs):
-    training_set = DataLoader(torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size,
-                              shuffle=True)
-
+def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization_param=0,
+             regularization_exp=2, data_val=None, track_history=True, verbose=False, learning_rate=None, **kwargs):
+    training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
     # select optimizer
@@ -108,13 +105,13 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
         if verbose: print("################################ ", epoch, " ################################")
 
         # Loop over batches
-        for j, (x_train_, u_train_) in enumerate(training_set):
+        for j, (x_train_, y_train_) in enumerate(training_set):
             def closure():
                 # zero the parameter gradients
                 optimizer_.zero_grad()
                 # forward + backward + optimize
-                u_pred_ = model(x_train_)
-                loss_u = torch.mean((u_pred_ - u_train_) ** p)
+                y_pred_ = model(x_train_)
+                loss_u = torch.mean((y_pred_ - y_train_) ** p)
                 loss_reg = regularization(model, regularization_exp)
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward()
@@ -126,28 +123,29 @@ def fit_FFNN(model, x_train, y_train, num_epochs, batch_size, optimizer, p=2, re
 
             optimizer_.step(closure=closure)
 
+        if data_val:
+            x_val, y_val = data_val[:]
         # record validation loss for history
-        if y_val is not None and track_history:
+        if data_val is not None and track_history:
             y_val_pred_ = model(x_val)
             validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
             loss_history_val[epoch] = validation_loss
 
         if verbose and track_history:
             print('Training Loss: ', np.round(loss_history_train[-1], 8))
-            if y_val is not None: print('Validation Loss: ', np.round(validation_loss, 8))
+            if data_val is not None: print('Validation Loss: ', np.round(validation_loss, 8))
 
     if verbose and track_history:
         print('Final Training Loss: ', np.round(loss_history_train[-1], 8))
-        if y_val is not None: print('Final Validation Loss: ', np.round(loss_history_val[-1], 8))
+        if data_val is not None: print('Final Validation Loss: ', np.round(loss_history_val[-1], 8))
 
     return loss_history_train, loss_history_val
 
 
-def get_trained_nn_model(model_param, training_param, x_train, y_train, x_val=None, y_val=None):
+def get_trained_nn_model(model_param, training_param, data, data_val=None):
     nn_model = FFNN(**model_param)
     # Xavier weight initialization
     init_xavier(nn_model, **training_param)
 
-    loss_history_train, loss_history_val = fit_FFNN(nn_model, x_train, y_train, **training_param, x_val=x_val,
-                                                    y_val=y_val)
+    loss_history_train, loss_history_val = fit_FFNN(nn_model, data, data_val=data_val, **training_param)
     return nn_model, loss_history_train, loss_history_val
