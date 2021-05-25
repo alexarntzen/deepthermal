@@ -5,9 +5,9 @@ import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
-from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_scatter
+from deepthermal.plotting import get_disc_str, plot_model_history, plot_result_sorted
 from deepthermal.task3_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
-from deepthermal.forcasting import TimeSeriesDataset
+from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
 
 # Path data
 ########
@@ -39,23 +39,28 @@ def print_model_errors(rel_val_errors, **kwargs):
         print(f"Model {i} validation error: {avg_error * 100}%")
 
 
-def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, x_test, x_train, y_train, **kwargs):
+def plot_result(models, data_train, loss_history_trains, loss_history_vals, rel_val_errors,
+                t_train=None, t_pred=None, **kwargs):
     print_model_errors(rel_val_errors)
     for i in MODEL_LIST:
         plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=(SET_NAME + f"_{i}"),
                            path_figures=PATH_FIGURES)
         for j in range(len(models[i])):
-            plot_model_scatter(models[i][j], x_test, f"{SET_NAME}_{i}_{j}", x_train, y_train,
+            t_indices, y_pred = get_structured_prediction(models[i][j], data_train)
+            x_pred = torch.cat((t_train, t_pred))[t_indices]
+            x_train = t_train
+            y_train = data_train.data
+
+            plot_result_sorted(x_pred, y_pred, x_train, y_train, plot_name=f"{SET_NAME}_{i}_{j}",
                                path_figures=PATH_FIGURES)
 
-
-# def make_submission(model):
-#     # Data frame with data
-#     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
-#     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-#     y_pred = model(x_test).detach()
-#     df_test[DATA_COLUMN] = y_pred[:, 0]
-#     df_test.to_csv(PATH_SUBMISSION, index=False)
+    # def make_submission(model):
+    #     # Data frame with data
+    #     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
+    #     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
+    #     y_pred = model(x_test).detach()
+    #     df_test[DATA_COLUMN] = y_pred[:, 0]
+    #     df_test.to_csv(PATH_SUBMISSION, index=False)
 
 
 if __name__ == "__main__":
@@ -65,7 +70,8 @@ if __name__ == "__main__":
 
     # Load data
     data_train_ = torch.tensor(df_train[[DATA_COLUMN]].values)
-    data_test_ = torch.tensor(df_test[["t"]].values)
+    t_train = torch.tensor(df_train[["t"]].values)
+    t_pred = torch.tensor(df_test[["t"]].values)
 
     # Standardise values
     # Normalize values
@@ -88,6 +94,7 @@ if __name__ == "__main__":
                                 folds=FOLDS,
                                 verbose=True)
 
-    # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
+    plot_result(data_train=data, t_train=t_train, t_pred=t_pred, path_figures=PATH_FIGURES, **cv_results)
+
 # functions to make
 # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)

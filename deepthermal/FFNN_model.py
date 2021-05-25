@@ -124,7 +124,7 @@ def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization
             optimizer_.step(closure=closure)
 
         if data_val:
-            x_val, y_val = DataLoader(data_val, batch_size=len(data_val), shuffle=False)[0]
+            x_val, y_val = next(iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False)))
         # record validation loss for history
         if data_val is not None and track_history:
             y_val_pred_ = model(x_val)

@@ -30,12 +30,12 @@ def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, data, fold
         loss_history_vals_k = []
         for k_num, (train_index, val_index) in enumerate(kf.split(data)):
             if verbose: print(f"Running model (mod={model_num},k={k_num})")
-            data_train_k, data_val_k = Subset(data, train_index), Subset(data, val_index)
+            data_train_k = Subset(data, train_index)
+            data_val_k = Subset(data, val_index)
             model = Model(**model_param)
             if init is not None:
                 init(model, **training_param)
-
-            loss_history_train, loss_history_val = fit(model, **training_param, data=data_train_k, dat_val=data_val_k)
+            loss_history_train, loss_history_val = fit(model, **training_param, data=data_train_k, data_val=data_val_k)
 
             models_k.append(model)
             loss_history_trains_k.append(loss_history_train)
