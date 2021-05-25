@@ -73,20 +73,20 @@ if __name__ == "__main__":
     X_TRAIN_STD = torch.std(data_train_)
     data_train = (data_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
 
-    data = TimeSeriesDataset(data_train, 32, 32)
+    data = TimeSeriesDataset(data_train[:, 0], 32, 32)
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
-    # cv_results = k_fold_cv_grid(Model=FFNN,
-    #                             model_param_iter=model_params_iter,
-    #                             fit=fit_FFNN,
-    #                             training_param_iter=training_params_iter,
-    #                             data=data,
-    #                             init=init_xavier,
-    #                             partial=True,
-    #                             folds=FOLDS,
-    #                             verbose=True)
+    cv_results = k_fold_cv_grid(Model=FFNN,
+                                model_param_iter=model_params_iter,
+                                fit=fit_FFNN,
+                                training_param_iter=training_params_iter,
+                                data=data,
+                                init=init_xavier,
+                                partial=True,
+                                folds=FOLDS,
+                                verbose=True)
 
     # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
 # functions to make

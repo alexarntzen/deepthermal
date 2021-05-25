@@ -1,13 +1,13 @@
 import torch
 import torch.utils
-from torch.utils.data import Subset
+from torch.utils.data import Subset, DataLoader
 import itertools
 from sklearn.model_selection import KFold
 
 
 def get_rMSE(model, data, type_str="", verbose=False):
     # Compute the relative mean square error
-    x_data, y_data = data[:]
+    x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
     y_pred = model(x_data)
     relative_error = torch.mean((y_pred - y_data) ** 2) / torch.mean(y_data ** 2)
     if verbose: print(f"Relative {type_str} error: ", relative_error.item() ** 0.5 * 100, "%")

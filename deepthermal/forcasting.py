@@ -10,13 +10,16 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
         if offset is None:
             self.offset = label_width
         else:
-            self.offset = label_width
+            self.offset = offset
 
     def __getitem__(self, index):
-        input_data = self.data[index: index + self.input_width]
-        label_data = self.data[index + self.input_width + self.offset - self.input_width:
-                               index + self.input_width + self.offset]
+        if isinstance(index, slice):
+            print(index)
+        else:
+            input_data = self.data[index: index + self.input_width]
+            label_data = self.data[index + self.input_width + self.offset - self.input_width:
+                                   index + self.input_width + self.offset]
         return input_data, label_data
 
     def __len__(self):
-        return self.data.size(0) - self.offset
+        return self.data.size(0) - self.offset - self.input_width

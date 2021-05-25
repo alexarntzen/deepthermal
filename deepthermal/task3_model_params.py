@@ -1,7 +1,7 @@
 
 MODEL_PARAMS_cf = {
-    "input_dimension": [8],
-    "output_dimension": [1],
+    "input_dimension": [32],
+    "output_dimension": [32],
     "n_hidden_layers": [10],
     "neurons": [40],
     "activation": ["relu"],
