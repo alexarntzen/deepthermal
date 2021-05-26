@@ -1,6 +1,6 @@
 import torch.utils.data
 import itertools
-
+import numpy as np
 
 class TimeSeriesDataset(torch.utils.data.Dataset):
     def __init__(self, data, input_width, label_width, offset=None):
@@ -34,13 +34,15 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 
 def get_structured_prediction(model, data_input, sequence_stride=None):
     if sequence_stride is None:
-        sequence_stride = data_input.input_width
+        sequence_stride = data_input.label_width
     step_1 = data_input.input_width + data_input.offset - data_input.label_width
     step_2 = data_input.input_width + data_input.offset
 
     # TODO: these indices could be specified further
-    data_indices = [i for i in range(0, data_input.max_len, sequence_stride)]
-    pred_time_indices = [ti for i in data_indices for ti in range(i + step_1, i + step_2)]
+    # this weird sequence construction is made so that we allways include the last element
+    data_indices = [i for i in range(data_input.max_len - 1, -1, -sequence_stride)][::-1]
+    pred_time_indices = [ti for i in data_indices for ti in range(i + step_1 + 1, i + step_2 + 1)]
+
     input_data_subset = torch.utils.data.Subset(data_input, data_indices)
     input_data_ = torch.utils.data.DataLoader(input_data_subset, batch_size=len(input_data_subset), shuffle=False)
     input_data, _ = next(iter(input_data_))

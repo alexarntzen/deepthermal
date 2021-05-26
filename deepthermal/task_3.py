@@ -6,7 +6,7 @@ import pandas as pd
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import get_disc_str, plot_model_history, plot_result_sorted
-from deepthermal.task3_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
+from deepthermal.task3_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf, INPUT_WIDTH, LABEL_WIDTH
 from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
 
 # Path data
@@ -19,10 +19,10 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task3.txt"
 
 # Vizualization and validation parameters
 ########
-DATA_COLUMN = "tf0"
+DATA_COLUMN = "ts0"
 MODEL_LIST = np.arange(1)
-SET_NAME = f"initial_1_{DATA_COLUMN}"
-FOLDS = 5
+SET_NAME = f"initial_{INPUT_WIDTH}_{DATA_COLUMN}"
+FOLDS = 10
 #########
 
 model_params = MODEL_PARAMS_cf
@@ -47,11 +47,14 @@ def plot_result(models, data_train, loss_history_trains, loss_history_vals, rel_
                            path_figures=PATH_FIGURES)
         for j in range(len(models[i])):
             t_indices, y_pred = get_structured_prediction(models[i][j], data_train)
+            assert 243 in t_indices  # this is the last index
+
             x_pred = torch.cat((t_train, t_pred))[t_indices]
             x_train = t_train
             y_train = data_train.data
 
-            plot_result_sorted(x_pred, y_pred, x_train, y_train, plot_name=f"{SET_NAME}_{i}_{j}",
+            plot_result_sorted(x_pred=x_pred, y_pred=y_pred, x_train=x_train, y_train=y_train,
+                               plot_name=f"{SET_NAME}_{i}_{j}",
                                path_figures=PATH_FIGURES)
 
     # def make_submission(model):
@@ -79,7 +82,7 @@ if __name__ == "__main__":
     X_TRAIN_STD = torch.std(data_train_)
     data_train = (data_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
 
-    data = TimeSeriesDataset(data_train[:, 0], 32, 32)
+    data = TimeSeriesDataset(data_train[:, 0], input_width=INPUT_WIDTH, label_width=LABEL_WIDTH)
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)

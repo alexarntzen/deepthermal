@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
 import torch
-
-
 def get_disc_str(model):
     params = {"activation": model.activation, "n_hidden_layers": model.n_hidden_layers, "neurons": model.neurons}
     return str(params)
@@ -31,9 +29,9 @@ def plot_result_sorted(x_pred=None, y_pred=None, x_train=None, y_train=None, plo
                        path_figures="../figures"):
     fig, ax = plt.subplots(figsize=(8, 6))
     if x_train is not None and y_train is not None:
-        ax.plot(x_train, y_train, label=f"training_data", ls="dotted")
+        ax.plot(x_train, y_train, ".-.",  label=f"training_data")
     if x_pred is not None and y_pred is not None:
-        ax.plot(x_pred, y_pred, label=f"prediction")
+        ax.plot(x_pred, y_pred, "*", label=f"prediction")
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
