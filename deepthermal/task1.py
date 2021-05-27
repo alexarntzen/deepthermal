@@ -103,5 +103,5 @@ if __name__ == "__main__":
                                 verbose=True)
 
 # functions to make
-# plot_result(**cv_results)
+    plot_result(**cv_results)
 # plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)

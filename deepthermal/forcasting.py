@@ -5,7 +5,7 @@ import numpy as np
 class TimeSeriesDataset(torch.utils.data.Dataset):
     def __init__(self, data, input_width, label_width, offset=None):
         self.data = data
-
+        self.rest_shape = data.shape[1:]
         self.input_width = input_width
         self.label_width = label_width
         if offset is None:
@@ -23,7 +23,7 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
             label_data = self.data[index + self.step_1: index + self.step_2]
         elif self.__len__() <= index < self.max_len:
             input_data = self.data[index: index + self.input_width]
-            label_data = torch.zeros([self.label_width])
+            label_data = torch.zeros_like(self.data)[self.step_1: self.step_2]
         elif self.max_len <= index:
             raise IndexError('list index out of range')
         return input_data, label_data
@@ -35,13 +35,11 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 def get_structured_prediction(model, data_input, sequence_stride=None):
     if sequence_stride is None:
         sequence_stride = data_input.label_width
-    step_1 = data_input.input_width + data_input.offset - data_input.label_width
-    step_2 = data_input.input_width + data_input.offset
 
     # TODO: these indices could be specified further
     # this weird sequence construction is made so that we allways include the last element
     data_indices = [i for i in range(data_input.max_len - 1, -1, -sequence_stride)][::-1]
-    pred_time_indices = [ti for i in data_indices for ti in range(i + step_1 + 1, i + step_2 + 1)]
+    pred_time_indices = [ti for i in data_indices for ti in range(i + data_input.step_1 + 1, i + data_input.step_2 + 1)]
 
     input_data_subset = torch.utils.data.Subset(data_input, data_indices)
     input_data_ = torch.utils.data.DataLoader(input_data_subset, batch_size=len(input_data_subset), shuffle=False)

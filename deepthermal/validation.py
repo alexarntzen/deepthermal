@@ -5,13 +5,27 @@ import itertools
 from sklearn.model_selection import KFold
 
 
-def get_rMSE(model, data, type_str="", verbose=False):
+# Root Relative Squared Error
+def get_RRSE(model, data, type_str="", verbose=False):
     # Compute the relative mean square error
     x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
-    y_pred = model(x_data)
-    relative_error = torch.mean((y_pred - y_data) ** 2) / torch.mean(y_data ** 2)
-    if verbose: print(f"Relative {type_str} error: ", relative_error.item() ** 0.5 * 100, "%")
+    y_pred = model(x_data).detach()
+    y_data_mean = torch.mean(y_data, dim=0)
+    relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum((y_data_mean - y_data) ** 2)
+    relative_error = relative_error_2 ** 0.5
+    if verbose: print(f"Root Relative Squared {type_str} Error: ", relative_error.item() * 100, "%")
     return relative_error.item()
+
+
+# Normalized root-mean-square error
+def get_NRMSE(model, data, type_str="", verbose=False):
+    # Compute the relative mean square error
+    x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
+    y_pred = model(x_data).detach()
+    error = torch.mean((y_pred - y_data) ** 2) ** 0.5
+    norm_error = torch.mean((y_pred - y_data) ** 2) ** 0.5 / torch.mean(y_data)
+    if verbose: print(f"Root mean square {type_str} error: ", error.item() * 100, "%")
+    return error.item()
 
 
 def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, data, folds=5, init=None, partial=False,
@@ -40,8 +54,8 @@ def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, data, fold
             models_k.append(model)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            rel_train_errors_k.append(get_rMSE(model, data_train_k))
-            rel_val_errors_k.append(get_rMSE(model, data_val_k))
+            rel_train_errors_k.append(get_RRSE(model, data_train_k))
+            rel_val_errors_k.append(get_RRSE(model, data_val_k))
 
             if partial:
                 break
@@ -65,3 +79,10 @@ def k_fold_cv_grid(Model, model_param_iter, fit, training_param_iter, data, fold
 def create_subdictionary_iterator(dictionary):
     for sublist in itertools.product(*dictionary.values()):
         yield dict(zip(dictionary.keys(), sublist))
+
+
+# printing model errors
+def print_model_errors(rel_val_errors, **kwargs):
+    for i, rel_val_error_list in enumerate(rel_val_errors):
+        avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
+        print(f"Model {i} Root Relative Squared validation error: {avg_error * 100}%")

@@ -24,6 +24,7 @@ MODEL_LIST = np.arange(1)
 SET_NAME = f"initial_{INPUT_WIDTH}_{DATA_COLUMN}"
 FOLDS = 10
 #########
+# encoder decoder lstm
 
 model_params = MODEL_PARAMS_cf
 training_params = TRAINING_PARAMS_cf
@@ -47,7 +48,6 @@ def plot_result(models, data_train, loss_history_trains, loss_history_vals, rel_
                            path_figures=PATH_FIGURES)
         for j in range(len(models[i])):
             t_indices, y_pred = get_structured_prediction(models[i][j], data_train)
-            assert 243 in t_indices  # this is the last index
 
             x_pred = torch.cat((t_train, t_pred))[t_indices]
             x_train = t_train
@@ -101,3 +101,4 @@ if __name__ == "__main__":
 
 # functions to make
 # plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
+
