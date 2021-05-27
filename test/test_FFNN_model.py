@@ -55,7 +55,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
-            "n_hidden_layers": [4],
+            "n_hidden_layers": [5],
             "neurons": [10, 20],
             "activation": ["relu", ]
         }
