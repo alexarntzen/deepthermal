@@ -49,8 +49,8 @@ def plot_task5(
     x_sampled, pred_sampled, x_minimizer, plot_name, path_figures=PATH_FIGURES
 ):
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.set_xlabel("v")
-    ax.set_ylabel("T")
+    ax.set_xlabel("D")
+    ax.set_ylabel("v")
     ax.set_title("Cost function minimizer vizualization")
     ax.scatter(
         x_sampled[:, 0], x_sampled[:, 1], c=pred_sampled[:, 0], label="sampled points"
