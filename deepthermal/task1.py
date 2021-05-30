@@ -6,8 +6,13 @@ import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
-from deepthermal.plotting import get_disc_str, plot_model_history, plot_model_1d
-from deepthermal.task1_model_params import MODEL_PARAMS_tf0, TRAINING_PARAMS_tf0, MODEL_PARAMS_ts0, TRAINING_PARAMS_ts0
+from deepthermal.plotting import get_disc_str, plot_model_history
+from deepthermal.task1_model_params import (
+    MODEL_PARAMS_tf0,
+    TRAINING_PARAMS_tf0,
+    MODEL_PARAMS_ts0,
+    TRAINING_PARAMS_ts0,
+)
 
 ########
 PATH_FIGURES = "figures/task1"
@@ -25,7 +30,7 @@ model_params = MODEL_PARAMS_tf0
 training_params = TRAINING_PARAMS_tf0
 
 
-## printing model errors
+# printing model errors
 def print_model_errors(rel_val_errors, **kwargs):
     for i, rel_val_error_list in enumerate(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
@@ -43,8 +48,14 @@ def plot_models(model_number_list, models, plot_name="vis_model", **kwargs):
         for k_, ax in enumerate(fig.axes):
             ax.scatter(x_train[:, 0], y_train[:, 0], label=f"{DATA_COLUMN}_train")
 
-            ax.plot(x_test, models[model_number][k_](x_test)[:, 0].detach(), label=f"{DATA_COLUMN}_pred", lw=2, ls="-.",
-                    color="black", )
+            ax.plot(
+                x_test,
+                models[model_number][k_](x_test)[:, 0].detach(),
+                label=f"{DATA_COLUMN}_pred",
+                lw=2,
+                ls="-.",
+                color="black",
+            )
 
             ax.set_xlabel("t")
             ax.set_ylabel("T")
@@ -54,12 +65,19 @@ def plot_models(model_number_list, models, plot_name="vis_model", **kwargs):
         plt.close(fig)
 
 
-def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, **kwargs):
+def plot_result(
+    models, loss_history_trains, loss_history_vals, rel_val_errors, **kwargs
+):
     print_model_errors(rel_val_errors)
     plot_models(MODEL_LIST, models, "result_" + SET_NAME)
     for i in MODEL_LIST:
-        plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=(SET_NAME + f"_{i}"),
-                           path_figures=PATH_FIGURES)
+        plot_model_history(
+            models[i],
+            loss_history_trains[i],
+            loss_history_vals[i],
+            plot_name=(SET_NAME + f"_{i}"),
+            path_figures=PATH_FIGURES,
+        )
 
 
 def make_submission(model):
@@ -92,16 +110,18 @@ if __name__ == "__main__":
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
-    cv_results = k_fold_cv_grid(Model=FFNN,
-                                model_param_iter=model_params_iter,
-                                fit=fit_FFNN,
-                                training_param_iter=training_params_iter,
-                                data=data,
-                                init=init_xavier,
-                                partial=False,
-                                folds=FOLDS,
-                                verbose=True)
+    cv_results = k_fold_cv_grid(
+        Model=FFNN,
+        model_param_iter=model_params_iter,
+        fit=fit_FFNN,
+        training_param_iter=training_params_iter,
+        data=data,
+        init=init_xavier,
+        partial=False,
+        folds=FOLDS,
+        verbose=True,
+    )
 
-# functions to make
+    # functions to make
     plot_result(**cv_results)
 # plot_model_1d(model=, x_test, "result_final_model_tf0", x_train, y_train)

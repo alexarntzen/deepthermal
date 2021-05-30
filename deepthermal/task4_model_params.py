@@ -1,5 +1,3 @@
-import torch
-
 MODEL_PARAMS_T = {
     "input_dimension": [2],
     "output_dimension": [1],
@@ -13,7 +11,7 @@ TRAINING_PARAMS_T = {
     "regularization_exp": [2],
     "regularization_param": [1e-7],
     "optimizer": ["ADAM"],
-    "learning_rate": [0.001]
+    "learning_rate": [0.001],
 }
 
 V_GUESS = 15.2

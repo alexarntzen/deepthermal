@@ -1,6 +1,5 @@
 import torch.utils.data
-import itertools
-import numpy as np
+
 
 class TimeSeriesDataset(torch.utils.data.Dataset):
     def __init__(self, data, input_width, label_width, offset=None):
@@ -19,13 +18,13 @@ class TimeSeriesDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if index < self.__len__():
-            input_data = self.data[index: index + self.input_width]
-            label_data = self.data[index + self.step_1: index + self.step_2]
+            input_data = self.data[index : index + self.input_width]
+            label_data = self.data[index + self.step_1 : index + self.step_2]
         elif self.__len__() <= index < self.max_len:
-            input_data = self.data[index: index + self.input_width]
-            label_data = torch.zeros_like(self.data)[self.step_1: self.step_2]
+            input_data = self.data[index : index + self.input_width]
+            label_data = torch.zeros_like(self.data)[self.step_1 : self.step_2]
         elif self.max_len <= index:
-            raise IndexError('list index out of range')
+            raise IndexError("list index out of range")
         return input_data, label_data
 
     def __len__(self):
@@ -38,11 +37,19 @@ def get_structured_prediction(model, data_input, sequence_stride=None):
 
     # TODO: these indices could be specified further
     # this weird sequence construction is made so that we allways include the last element
-    data_indices = [i for i in range(data_input.max_len - 1, -1, -sequence_stride)][::-1]
-    pred_time_indices = [ti for i in data_indices for ti in range(i + data_input.step_1 + 1, i + data_input.step_2 + 1)]
+    data_indices = [i for i in range(data_input.max_len - 1, -1, -sequence_stride)][
+        ::-1
+    ]
+    pred_time_indices = [
+        ti
+        for i in data_indices
+        for ti in range(i + data_input.step_1 + 1, i + data_input.step_2 + 1)
+    ]
 
     input_data_subset = torch.utils.data.Subset(data_input, data_indices)
-    input_data_ = torch.utils.data.DataLoader(input_data_subset, batch_size=len(input_data_subset), shuffle=False)
+    input_data_ = torch.utils.data.DataLoader(
+        input_data_subset, batch_size=len(input_data_subset), shuffle=False
+    )
     input_data, _ = next(iter(input_data_))
     data_pred = model(input_data).detach()
 

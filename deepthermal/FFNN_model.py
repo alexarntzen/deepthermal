@@ -6,20 +6,21 @@ import numpy as np
 
 # GLOBAL VARIABLES
 
-larning_rates = {
-    'ADAM': 0.001,
-    'LBFGS': 0.1
-}
+larning_rates = {"ADAM": 0.001, "LBFGS": 0.1}
 
-activations = {
-    'relu': nn.ReLU(),
-    'sigmoid': nn.Sigmoid(),
-    'tanh': nn.Tanh()
-}
+activations = {"relu": nn.ReLU(), "sigmoid": nn.Sigmoid(), "tanh": nn.Tanh()}
 
 
 class FFNN(nn.Module):
-    def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, activation="relu", **kwargs):
+    def __init__(
+        self,
+        input_dimension,
+        output_dimension,
+        n_hidden_layers,
+        neurons,
+        activation="relu",
+        **kwargs
+    ):
         super(FFNN, self).__init__()
 
         # Number of input dimensions n
@@ -36,7 +37,9 @@ class FFNN(nn.Module):
         self.activation_ = activations[self.activation]
 
         self.input_layer = nn.Linear(self.input_dimension, self.neurons)
-        self.hidden_layers = nn.ModuleList([nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)])
+        self.hidden_layers = nn.ModuleList(
+            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)]
+        )
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
     def forward(self, x):
@@ -77,13 +80,26 @@ def init_xavier(model, init_weight_seed=None, **kwargs):
 def regularization(model, p):
     reg_loss = 0
     for name, param in model.named_parameters():
-        if 'weight' or 'bias' in name:
+        if "weight" or "bias" in name:
             reg_loss = reg_loss + torch.norm(param, p)
     return reg_loss
 
 
-def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization_param=0,
-             regularization_exp=2, data_val=None, track_history=True, verbose=False, learning_rate=None, **kwargs):
+def fit_FFNN(
+    model,
+    data,
+    num_epochs,
+    batch_size,
+    optimizer,
+    p=2,
+    regularization_param=0,
+    regularization_exp=2,
+    data_val=None,
+    track_history=True,
+    verbose=False,
+    learning_rate=None,
+    **kwargs
+):
     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
@@ -91,8 +107,13 @@ def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization
     if optimizer == "ADAM":
         optimizer_ = optim.Adam(model.parameters(), lr=learning_rate)
     elif optimizer == "LBFGS":
-        optimizer_ = optim.LBFGS(model.parameters(), lr=learning_rate, max_iter=1, max_eval=50000,
-                                 tolerance_change=1.0 * np.finfo(float).eps)
+        optimizer_ = optim.LBFGS(
+            model.parameters(),
+            lr=learning_rate,
+            max_iter=1,
+            max_eval=50000,
+            tolerance_change=1.0 * np.finfo(float).eps,
+        )
     else:
         raise ValueError("Optimizer not recognized")
 
@@ -100,10 +121,16 @@ def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization
     loss_history_val = np.zeros((num_epochs))
     # Loop over epochs
     for epoch in range(num_epochs):
-        if verbose: print("################################ ", epoch, " ################################")
+        if verbose:
+            print(
+                "################################ ",
+                epoch,
+                " ################################",
+            )
 
         # Loop over batches
         for j, (x_train_, y_train_) in enumerate(training_set):
+
             def closure():
                 # zero the parameter gradients
                 optimizer_.zero_grad()
@@ -122,7 +149,9 @@ def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization
             optimizer_.step(closure=closure)
 
         if data_val:
-            x_val, y_val = next(iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False)))
+            x_val, y_val = next(
+                iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
+            )
         # record validation loss for history
         if data_val is not None and track_history:
             y_val_pred_ = model(x_val)
@@ -130,12 +159,14 @@ def fit_FFNN(model, data, num_epochs, batch_size, optimizer, p=2, regularization
             loss_history_val[epoch] = validation_loss
 
         if verbose and track_history:
-            print('Training Loss: ', np.round(loss_history_train[-1], 8))
-            if data_val is not None: print('Validation Loss: ', np.round(validation_loss, 8))
+            print("Training Loss: ", np.round(loss_history_train[-1], 8))
+            if data_val is not None:
+                print("Validation Loss: ", np.round(validation_loss, 8))
 
     if verbose and track_history:
-        print('Final Training Loss: ', np.round(loss_history_train[-1], 8))
-        if data_val is not None: print('Final Validation Loss: ', np.round(loss_history_val[-1], 8))
+        print("Final Training Loss: ", np.round(loss_history_train[-1], 8))
+        if data_val is not None:
+            print("Final Validation Loss: ", np.round(loss_history_val[-1], 8))
 
     return loss_history_train, loss_history_val
 
@@ -145,5 +176,7 @@ def get_trained_nn_model(model_param, training_param, data, data_val=None):
     # Xavier weight initialization
     init_xavier(nn_model, **training_param)
 
-    loss_history_train, loss_history_val = fit_FFNN(nn_model, data, data_val=data_val, **training_param)
+    loss_history_train, loss_history_val = fit_FFNN(
+        nn_model, data, data_val=data_val, **training_param
+    )
     return nn_model, loss_history_train, loss_history_val

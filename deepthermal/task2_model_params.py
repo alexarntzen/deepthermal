@@ -1,4 +1,3 @@
-
 MODEL_PARAMS_cf = {
     "input_dimension": [8],
     "output_dimension": [1],
@@ -12,5 +11,5 @@ TRAINING_PARAMS_cf = {
     "regularization_exp": [2],
     "regularization_param": [1e-6],
     "optimizer": ["ADAM"],
-    "learning_rate": [0.001]
+    "learning_rate": [0.001],
 }

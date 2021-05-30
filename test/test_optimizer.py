@@ -63,19 +63,19 @@ class TestOptimizer(unittest.TestCase):
         for d in range(1, 10):
             cost, optim = self.get_unconstrained_cost(d)
             x_0 = torch.rand(d)
-            x_opt = argmin(cost, x_0, box_constraint=True)
+            x_opt = argmin(cost, x_0, box_constraint=[0, 1])
             self.assertAlmostEqual(torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5)
 
         # quad problem with solution in box
         for d in range(1, 10):
             cost, optim = self.get_unconstrained_cost_quad(d)
             x_0 = torch.rand(d)
-            x_opt = argmin(cost, x_0, box_constraint=True )
+            x_opt = argmin(cost, x_0, box_constraint=[0, 1])
             self.assertAlmostEqual(torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5)
 
     def test_constrained(self):
         print("\n\n Testing optimizer on a constrained problem:")
         cost, optim = self.get_constrained_cost()
         x_0 = torch.rand(2)
-        x_opt = argmin(cost, x_0, box_constraint=True )
+        x_opt = argmin(cost, x_0, box_constraint=[0, 1])
         self.assertAlmostEqual(torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5)

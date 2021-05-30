@@ -13,5 +13,5 @@ TRAINING_PARAMS_cf = {
     "regularization_exp": [2],
     "regularization_param": [1e-6],
     "optimizer": ["ADAM"],
-    "learning_rate": [0.001]
+    "learning_rate": [0.001],
 }
