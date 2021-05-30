@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
 from validation import print_model_errors
@@ -14,11 +15,11 @@ def get_disc_str(model):
 
 
 def plot_model_history(
-    models,
-    loss_history_trains,
-    loss_history_vals=None,
-    plot_name="0",
-    path_figures="figures",
+        models,
+        loss_history_trains,
+        loss_history_vals=None,
+        plot_name="0",
+        path_figures="figures",
 ):
     k = len(models)
     histfig, axis = plt.subplots(1, k, figsize=(8 * k, 6))
@@ -47,12 +48,12 @@ def plot_model_history(
 
 # Todo: make this iterable over datsets
 def plot_result_sorted(
-    x_pred=None,
-    y_pred=None,
-    x_train=None,
-    y_train=None,
-    plot_name="vis_model",
-    path_figures="../figures",
+        x_pred=None,
+        y_pred=None,
+        x_train=None,
+        y_train=None,
+        plot_name="vis_model",
+        path_figures="../figures",
 ):
     fig, ax = plt.subplots(figsize=(8, 6))
     if x_train is not None and y_train is not None:
@@ -64,17 +65,19 @@ def plot_result_sorted(
     plt.close(fig)
 
 
-# plot visualization
+# plot predicted data on
 def plot_model_scatter(
-    model,
-    x_test,
-    plot_name="vis_model",
-    x_train=None,
-    y_train=None,
-    path_figures="../figures",
+        model,
+        x_test,
+        plot_name="vis_model",
+        x_train=None,
+        y_train=None,
+        path_figures="../figures",
 ):
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.suptitle(f"Model: {get_disc_str(model)}")
+    ax.set_ylabel(r"$y$")
+    ax.set_xlabel(r"$||x||$")
     for i in range(model.output_dimension):
         if x_train is not None and y_train is not None:
             ax.scatter(
@@ -97,15 +100,28 @@ def plot_model_scatter(
     plt.close(fig)
 
 
-# plot visualization
-def plot_model_1d(
-    model,
-    x_test,
-    plot_name="vis_model",
-    x_train=None,
-    y_train=None,
-    path_figures="../figures",
+# plot predicted data on
+def plot_observables_scatter(
+        model,
+        x_train,
+        y_train,
+        plot_name="vis_model",
+        path_figures="../figures",
+        **kwargs
 ):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.suptitle(f"Model: {get_disc_str(model)}")
+    ax.set_xlabel("Actual data")
+    ax.set_ylabel("Predicted data")
+    for i in range(model.output_dimension):
+        ax.scatter(y_train[:, i], model(x_train).detach()[:, i], label=f"pred nr. {i}", marker=".", lw=1)
+    ax.legend()
+    fig.savefig(f"{path_figures}/{plot_name}.pdf")
+    plt.close(fig)
+
+
+# plot visualization
+def plot_model_1d(model, x_test, plot_name="vis_model", x_train=None, y_train=None, path_figures="../figures", ):
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.suptitle(f"Model: {get_disc_str(model)}")
     for i in range(model.output_dimension):
@@ -119,18 +135,18 @@ def plot_model_1d(
     plt.close(fig)
 
 
-def plot_result(
-    models,
-    loss_history_trains,
-    loss_history_vals,
-    rel_val_errors,
-    path_figures,
-    model_list,
-    plot_name,
-    plot_function,
-    function_kwargs,
-    **kwargs,
-):
+def plot_result(models,
+                loss_history_trains,
+                loss_history_vals,
+                rel_val_errors,
+                path_figures,
+                plot_name,
+                plot_function,
+                function_kwargs,
+                model_list=None,
+                **kwargs,
+                ):
+    if model_list is None: model_list = np.arange(len(models))
     print_model_errors(rel_val_errors)
     for i in model_list:
         plot_model_history(
