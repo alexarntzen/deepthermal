@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 import torch
+
+from validation import print_model_errors
+
+
 def get_disc_str(model):
     params = {"activation": model.activation, "n_hidden_layers": model.n_hidden_layers, "neurons": model.neurons}
     return str(params)
@@ -29,7 +33,7 @@ def plot_result_sorted(x_pred=None, y_pred=None, x_train=None, y_train=None, plo
                        path_figures="../figures"):
     fig, ax = plt.subplots(figsize=(8, 6))
     if x_train is not None and y_train is not None:
-        ax.plot(x_train, y_train, ".-.",  label=f"training_data")
+        ax.plot(x_train, y_train, ".-.", label=f"training_data")
     if x_pred is not None and y_pred is not None:
         ax.plot(x_pred, y_pred, "*", label=f"prediction")
     ax.legend()
@@ -44,8 +48,8 @@ def plot_model_scatter(model, x_test, plot_name="vis_model", x_train=None, y_tra
     for i in range(model.output_dimension):
         if x_train is not None and y_train is not None:
             ax.scatter(torch.norm(x_train, p=2, dim=1), y_train[:, i], label=f"train_{i}", marker=".")
-        ax.scatter(torch.norm(x_test, p=2, dim=1), model(x_test)[:, i].detach(), label=f"pred_{i}", marker=".",
-                   alpha=0.3)
+        ax.scatter(torch.norm(x_test, p=2, dim=1), model(x_test)[:, i].detach(), label=f"pred_{i}", marker="x",
+                   alpha=0.5, color="r", lw=1)
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
@@ -62,3 +66,16 @@ def plot_model_1d(model, x_test, plot_name="vis_model", x_train=None, y_train=No
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
+
+
+def plot_result(models, loss_history_trains, loss_history_vals, rel_val_errors, path_figures,
+                model_list,
+                plot_name,
+                plot_function, function_kwargs, **kwargs):
+    print_model_errors(rel_val_errors)
+    for i in model_list:
+        plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=f"{plot_name}_{i}",
+                           path_figures=path_figures)
+        for j in range(len(models[i])):
+            plot_function(plot_name=f"{plot_name}_{i}_{j}", model=models[i][j],
+                       path_figures=path_figures, **function_kwargs)

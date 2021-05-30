@@ -5,7 +5,7 @@ import pandas as pd
 
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator, print_model_errors
-from deepthermal.plotting import get_disc_str, plot_model_history, plot_result_sorted
+from deepthermal.plotting import get_disc_str, plot_model_history, plot_result
 from deepthermal.task4_model_params import MODEL_PARAMS_T, TRAINING_PARAMS_T, V_GUESS
 from deepthermal.optimization import argmin
 
@@ -28,17 +28,6 @@ FOLDS = 5
 
 model_params = MODEL_PARAMS_T
 training_params = TRAINING_PARAMS_T
-
-
-def plot_result(data_train, data_measured, models, loss_history_trains, loss_history_vals, rel_val_errors,
-                v_guess=0.5, **kwargs):
-    print_model_errors(rel_val_errors)
-    for i in MODEL_LIST:
-        plot_model_history(models[i], loss_history_trains[i], loss_history_vals[i], plot_name=(SET_NAME + f"_{i}"),
-                           path_figures=PATH_FIGURES)
-        for j in range(len(models[i])):
-            plot_task4(data_train, data_measured, plot_name=f"{SET_NAME}_{i}_{j}", model=models[i][j],
-                       path_figures=PATH_FIGURES, v_guess=v_guess)
 
 
 # def make_submission(model):
@@ -73,6 +62,7 @@ def plot_task4(data_train, data_measured, plot_name, model=None, path_figures=PA
     plt.savefig(f"{path_figures}/{plot_name}.pdf")
 
 
+# functional style is great, but might not be optimized for python
 def get_G(t, T, approx_T):
     def G(v):
         data = torch.stack((t, v.tile((t.shape[0],))), dim=1)
@@ -121,7 +111,12 @@ if __name__ == "__main__":
                                 verbose=True)
 
     # plot model
-    plot_result(data_train, data_measured, path_figures=PATH_FIGURES, **cv_results, v_guess=v_guess_)
+    SET_NAME_1 = SET_NAME + "1"
+    plot_kwargs1 = {"v_guess": v_guess_,
+                    "data_train": data_train,
+                    "data_measured": data_measured}
+    plot_result(path_figures=PATH_FIGURES, model_list=MODEL_LIST, plot_name=SET_NAME_1, **cv_results,
+                plot_function=plot_task4, function_kwargs=plot_kwargs1)
 
     # optimization
     t_tensor = data_measured[:, 0]
@@ -130,5 +125,10 @@ if __name__ == "__main__":
     G = get_G(t_tensor, T_tensor, model)
     v_opt = argmin(G, v_guess_, lr=0.1, epochs=2)
     print("final_v: ", v_opt, v_guess_)
-    SET_NAME = "model_check_2"
-    plot_result(data_train, data_measured, path_figures=PATH_FIGURES, **cv_results, v_guess=v_opt)
+
+    SET_NAME_2 = SET_NAME + "2"
+    plot_kwargs2 = {"v_guess": v_opt,
+                    "data_train": data_train,
+                    "data_measured": data_measured}
+    plot_result(path_figures=PATH_FIGURES, model_list=MODEL_LIST, plot_name=SET_NAME_2, **cv_results,
+                plot_function=plot_task4, function_kwargs=plot_kwargs2)
