@@ -18,6 +18,7 @@ class TestPrediction(unittest.TestCase):
         cls.x = 2 * np.pi * torch.rand((cls.n_samples, 1))
 
     def test_dataset_params(self):
+        print("\n\n Test whether TimeSeriesDatasets stores the right parameters:")
         for label_width in range(0, 20):
             dataset = TimeSeriesDataset(self.x, input_width=50, label_width=label_width, offset=20)
             w_len = self.n_samples - dataset.input_width - dataset.offset
@@ -36,6 +37,7 @@ class TestPrediction(unittest.TestCase):
                 dataset[w_max_len]
 
     def test_structured_prediction(self):
+        print("\n\n Test whether prediction function uses last time index:")
         for label_width in range(1, 20):
             for offset in range(0, 20):
                 dataset = TimeSeriesDataset(self.x, input_width=50, label_width=label_width, offset=offset)

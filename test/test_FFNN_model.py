@@ -28,6 +28,8 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         cls.data_test = torch.utils.data.TensorDataset(cls.x_test, cls.y_test)
 
     def test_approx_error(self):
+        print("\n\n Approximating the sine function:")
+
         model_params = {
             "input_dimension": 1,
             "output_dimension": 1,
@@ -52,6 +54,8 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
     def test_k_fold_cv_grid(self):
+        print("\n\n Approximating the sine function with cross validation grid:")
+
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
@@ -86,6 +90,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
                 self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
     def test_k_fold_cv_grid_partial(self):
+        print("\n\n Approximating the sine function with partial cross validation grid:")
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
