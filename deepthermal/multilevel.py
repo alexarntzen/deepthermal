@@ -41,117 +41,92 @@ def get_level_dataset(x_tensor, y_tensor, level):
         diff = y_tensor[level][level_indices] - y_tensor[level - 1][level_indices]
         return x_tensor[level_indices], diff
 
-
-class Multilevel(Dataset):
-    def __init__(self, y_tensors, x_tensor):
-        # last tensor are the x_values
-        assert x_tensor.size(0) == y_tensors[0].size(0), "Tensor lenght of y ground level does not mach x"
-        self.level_len = torch.zeros(len(y_tensors), dtype=torch.int)
-        self.level_len[0] = y_tensors[0].size(0)
-        for i in range(len(y_tensors) - 1):
-            assert y_tensors[i].size(0) >= y_tensors[i + 1].size(0), "First tensor should be one with the most data"
-            self.level_len[i + 1] = y_tensors[i + 1].size(0)
-
-        self.y_tensors = y_tensors
-        self.x_tensor = x_tensor
-
-    def __getitem__(self, level):
-        if level == 0:
-            # return x, y
-            return self.x_tensor, self.y_tensors[0]
-        elif level > 0:
-            data_len = self.level_len[level].item()
-            y_diff = self.y_tensors[level] - self.y_tensors[level - 1][:data_len]
-            return self.x_tensor[:data_len], y_diff
-
-    def __len__(self):
-        return len(self.y_tensors)
-
-
-def fit_multilevel(
-        model,
-        data,
-        num_epochs,
-        batch_size,
-        optimizer,
-        p=2,
-        regularization_param=0,
-        regularization_exp=2,
-        data_val=None,
-        track_history=True,
-        verbose=False,
-        learning_rate=None,
-        **kwargs
-):
-    training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
-    if learning_rate is None:
-        learning_rate = larning_rates[optimizer]
-    # select optimizer
-    if optimizer == "ADAM":
-        optimizer_ = optim.Adam(model.parameters(), lr=learning_rate)
-    elif optimizer == "LBFGS":
-        optimizer_ = optim.LBFGS(
-            model.parameters(),
-            lr=learning_rate,
-            max_iter=1,
-            max_eval=50000,
-            tolerance_change=1.0 * np.finfo(float).eps,
-        )
-    else:
-        raise ValueError("Optimizer not recognized")
-
-    loss_history_train = np.zeros((num_epochs))
-    loss_history_val = np.zeros((num_epochs))
-    # Loop over epochs
-    for epoch in range(num_epochs):
-        if verbose:
-            print(
-                "################################ ",
-                epoch,
-                " ################################",
-            )
-
-        # Loop over batches
-        for j, (x_train_, y_train_) in enumerate(training_set):
-
-            def closure():
-                # zero the parameter gradients
-                optimizer_.zero_grad()
-                # forward + backward + optimize
-                y_pred_ = model(x_train_)
-                loss_u = torch.mean((y_pred_ - y_train_) ** p)
-                loss_reg = regularization(model, regularization_exp)
-                loss = loss_u + regularization_param * loss_reg
-                loss.backward()
-
-                # Compute average training loss over batches for the current epoch
-                if track_history:
-                    loss_history_train[epoch] += loss.item() / len(training_set)
-                return loss
-
-            optimizer_.step(closure=closure)
-
-        if data_val:
-            x_val, y_val = next(
-                iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
-            )
-        # record validation loss for history
-        if data_val is not None and track_history:
-            y_val_pred_ = model(x_val)
-            validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
-            loss_history_val[epoch] = validation_loss
-
-        if verbose and track_history:
-            print("Training Loss: ", np.round(loss_history_train[-1], 8))
-            if data_val is not None:
-                print("Validation Loss: ", np.round(validation_loss, 8))
-
-    if verbose and track_history:
-        print("Final Training Loss: ", np.round(loss_history_train[-1], 8))
-        if data_val is not None:
-            print("Final Validation Loss: ", np.round(loss_history_val[-1], 8))
-
-    return loss_history_train, loss_history_val
+#
+#
+# def fit_multilevel(
+#         model,
+#         data,
+#         num_epochs,
+#         batch_size,
+#         optimizer,
+#         p=2,
+#         regularization_param=0,
+#         regularization_exp=2,
+#         data_val=None,
+#         track_history=True,
+#         verbose=False,
+#         learning_rate=None,
+#         **kwargs
+# ):
+#     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
+#     if learning_rate is None:
+#         learning_rate = larning_rates[optimizer]
+#     # select optimizer
+#     if optimizer == "ADAM":
+#         optimizer_ = optim.Adam(model.parameters(), lr=learning_rate)
+#     elif optimizer == "LBFGS":
+#         optimizer_ = optim.LBFGS(
+#             model.parameters(),
+#             lr=learning_rate,
+#             max_iter=1,
+#             max_eval=50000,
+#             tolerance_change=1.0 * np.finfo(float).eps,
+#         )
+#     else:
+#         raise ValueError("Optimizer not recognized")
+#
+#     loss_history_train = np.zeros((num_epochs))
+#     loss_history_val = np.zeros((num_epochs))
+#     # Loop over epochs
+#     for epoch in range(num_epochs):
+#         if verbose:
+#             print(
+#                 "################################ ",
+#                 epoch,
+#                 " ################################",
+#             )
+#
+#         # Loop over batches
+#         for j, (x_train_, y_train_) in enumerate(training_set):
+#
+#             def closure():
+#                 # zero the parameter gradients
+#                 optimizer_.zero_grad()
+#                 # forward + backward + optimize
+#                 y_pred_ = model(x_train_)
+#                 loss_u = torch.mean((y_pred_ - y_train_) ** p)
+#                 loss_reg = regularization(model, regularization_exp)
+#                 loss = loss_u + regularization_param * loss_reg
+#                 loss.backward()
+#
+#                 # Compute average training loss over batches for the current epoch
+#                 if track_history:
+#                     loss_history_train[epoch] += loss.item() / len(training_set)
+#                 return loss
+#
+#             optimizer_.step(closure=closure)
+#
+#         if data_val:
+#             x_val, y_val = next(
+#                 iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
+#             )
+#         # record validation loss for history
+#         if data_val is not None and track_history:
+#             y_val_pred_ = model(x_val)
+#             validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
+#             loss_history_val[epoch] = validation_loss
+#
+#         if verbose and track_history:
+#             print("Training Loss: ", np.round(loss_history_train[-1], 8))
+#             if data_val is not None:
+#                 print("Validation Loss: ", np.round(validation_loss, 8))
+#
+#     if verbose and track_history:
+#         print("Final Training Loss: ", np.round(loss_history_train[-1], 8))
+#         if data_val is not None:
+#             print("Final Validation Loss: ", np.round(loss_history_val[-1], 8))
+#
+#     return loss_history_train, loss_history_val
 
 
 def predict_multilevel(model, data_input, sequence_stride=None):
