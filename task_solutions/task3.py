@@ -5,7 +5,7 @@ import pandas as pd
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import plot_model_history, plot_result_sorted
-from deepthermal.task3_model_params import (
+from task_solutions.task3_model_params import (
     MODEL_PARAMS_cf,
     TRAINING_PARAMS_cf,
     INPUT_WIDTH,
@@ -23,9 +23,9 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task3.txt"
 
 # Vizualization and validation parameters
 ########
-DATA_COLUMN = "ts0"
+DATA_COLUMN = "tf0"
 MODEL_LIST = np.arange(1)
-SET_NAME = f"initial_{INPUT_WIDTH}_{DATA_COLUMN}"
+SET_NAME = f"line_test_{INPUT_WIDTH}_{DATA_COLUMN}"
 FOLDS = 10
 #########
 # encoder decoder lstm

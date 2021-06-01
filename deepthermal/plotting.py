@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from validation import print_model_errors
+from deepthermal.validation import print_model_errors
 
 
 def get_disc_str(model):
@@ -39,7 +39,7 @@ def plot_model_history(
                 label="Validation error history",
             )
         axis[i].set_xlabel("Epoch")
-        axis[i].set_ylabel("Error")
+        axis[i].set_ylabel("Loss")
         axis[i].legend()
         histfig.suptitle(f"History, model: {get_disc_str(model)}")
     histfig.savefig(f"{path_figures}/history_{plot_name}.pdf")
@@ -59,7 +59,7 @@ def plot_result_sorted(
     if x_train is not None and y_train is not None:
         ax.plot(x_train, y_train, ".-.", label="training_data")
     if x_pred is not None and y_pred is not None:
-        ax.plot(x_pred, y_pred, "*", label="prediction")
+        ax.plot(x_pred, y_pred, ".", label="prediction")
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
@@ -101,7 +101,7 @@ def plot_model_scatter(
 
 
 # plot predicted data on
-def plot_observables_scatter(
+def plot_compare_scatter(
         model,
         x_train,
         y_train,
@@ -144,22 +144,22 @@ def plot_result(models,
                 plot_function,
                 function_kwargs,
                 model_list=None,
+                history=True,
                 **kwargs,
                 ):
     if model_list is None: model_list = np.arange(len(models))
     print_model_errors(rel_val_errors)
     for i in model_list:
-        plot_model_history(
-            models[i],
-            loss_history_trains[i],
-            loss_history_vals[i],
-            plot_name=f"{plot_name}_{i}",
-            path_figures=path_figures,
-        )
+        if history:
+            plot_model_history(models[i],
+                               loss_history_trains[i],
+                               loss_history_vals[i],
+                               plot_name=f"{plot_name}_{i}",
+                               path_figures=path_figures,
+                               )
         for j in range(len(models[i])):
-            plot_function(
-                plot_name=f"{plot_name}_{i}_{j}",
-                model=models[i][j],
-                path_figures=path_figures,
-                **function_kwargs,
-            )
+            plot_function(plot_name=f"{plot_name}_{i}_{j}",
+                          model=models[i][j],
+                          path_figures=path_figures,
+                          **function_kwargs,
+                          )

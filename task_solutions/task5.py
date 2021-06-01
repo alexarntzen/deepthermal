@@ -13,7 +13,7 @@ from deepthermal.validation import (
     create_subdictionary_iterator,
 )
 from deepthermal.plotting import plot_result, plot_model_scatter
-from deepthermal.task5_model_params import MODEL_PARAMS_CF, TRAINING_PARAMS_CF
+from task_solutions.task5_model_params import MODEL_PARAMS_CF, TRAINING_PARAMS_CF
 from deepthermal.optimization import argmin
 
 # some notes, use lbfgs?

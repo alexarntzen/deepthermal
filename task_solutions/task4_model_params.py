@@ -3,7 +3,7 @@ MODEL_PARAMS_T = {
     "output_dimension": [1],
     "n_hidden_layers": [6],
     "neurons": [25],
-    "activation": ["relu"],
+    "activation": ["tanh"],
 }
 TRAINING_PARAMS_T = {
     "num_epochs": [1000],

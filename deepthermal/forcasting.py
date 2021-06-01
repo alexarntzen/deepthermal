@@ -1,7 +1,8 @@
-import torch.utils.data
+import torch
+from torch.utils.data import Dataset
 
 
-class TimeSeriesDataset(torch.utils.data.Dataset):
+class TimeSeriesDataset(Dataset):
     def __init__(self, data, input_width, label_width, offset=None):
         self.data = data
         self.rest_shape = data.shape[1:]

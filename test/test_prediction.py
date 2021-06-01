@@ -45,3 +45,7 @@ class TestPrediction(unittest.TestCase):
                 last_pred_index = self.x.shape[0] + offset - 1
                 self.assertIn(last_pred_index, t_indices)
                 self.assertTrue(max(t_indices) == last_pred_index)
+
+
+if __name__ == '__main__':
+    unittest.main()

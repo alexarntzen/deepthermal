@@ -9,7 +9,7 @@ from deepthermal.validation import (
     create_subdictionary_iterator,
 )
 from deepthermal.plotting import plot_result
-from deepthermal.task4_model_params import MODEL_PARAMS_T, TRAINING_PARAMS_T, V_GUESS
+from task_solutions.task4_model_params import MODEL_PARAMS_T, TRAINING_PARAMS_T, V_GUESS
 from deepthermal.optimization import argmin
 
 # some notes, use lbfgs?
