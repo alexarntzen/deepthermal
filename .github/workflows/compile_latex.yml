@@ -1,4 +1,5 @@
 name: Compile latex
+
 on:
   push:
     paths:
