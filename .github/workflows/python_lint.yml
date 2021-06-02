@@ -1,4 +1,4 @@
-name: Check python linting and formatting
+name: Python linting
 
 on: [ push, pull_request ]
 

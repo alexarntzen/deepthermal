@@ -1,8 +1,7 @@
-![Python testing](https://github.com/github/alexarntzen/deepthermal/workflows/python_test.yml/badge.svg)
-![Python linting](https://github.com/github/alexarntzen/deepthermal/workflows/python_lint.yml/badge.svg)
-![Latex compiled](https://github.com/github/alexarntzen/deepthermal/workflows/compile_latex.yml/badge.svg)
+![Python testing](https://github.com/alexarntzen/deepthermal/workflows/Python%20testing/badge.svg)
+![Python linting](https://github.com/alexarntzen/deepthermal/workflows/Python%20linting/badge.svg)
+![Latex compiled](https://github.com/alexarntzen/deepthermal/workflows/Compile%20latex/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
 
 # Deepthermal
 Project for 401-4656-21L Deep Learning in Scientific Computing FS2021 at ETH Zürich. 
