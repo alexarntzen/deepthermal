@@ -13,13 +13,13 @@ activations = {"relu": nn.ReLU(), "sigmoid": nn.Sigmoid(), "tanh": nn.Tanh()}
 
 class FFNN(nn.Module):
     def __init__(
-            self,
-            input_dimension,
-            output_dimension,
-            n_hidden_layers,
-            neurons,
-            activation="relu",
-            **kwargs
+        self,
+        input_dimension,
+        output_dimension,
+        n_hidden_layers,
+        neurons,
+        activation="relu",
+        **kwargs
     ):
         super(FFNN, self).__init__()
 
@@ -43,7 +43,8 @@ class FFNN(nn.Module):
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
     def forward(self, x):
-        # The forward function performs the set of affine and non-linear transformations defining the network
+        # The forward function performs the set of affine and
+        # non-linear transformations defining the network
         # (see equation above)
         x = self.activation_(self.input_layer(x))
         for k, l in enumerate(self.hidden_layers):
@@ -86,19 +87,19 @@ def regularization(model, p):
 
 
 def fit_FFNN(
-        model,
-        data,
-        num_epochs,
-        batch_size,
-        optimizer,
-        p=2,
-        regularization_param=0,
-        regularization_exp=2,
-        data_val=None,
-        track_history=True,
-        verbose=False,
-        learning_rate=None,
-        **kwargs
+    model,
+    data,
+    num_epochs,
+    batch_size,
+    optimizer,
+    p=2,
+    regularization_param=0,
+    regularization_exp=2,
+    data_val=None,
+    track_history=True,
+    verbose=False,
+    learning_rate=None,
+    **kwargs
 ):
     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
     if learning_rate is None:
@@ -171,7 +172,15 @@ def fit_FFNN(
     return loss_history_train, loss_history_val
 
 
-def get_trained_model(model_param, training_param, data, data_val=None, Model=FFNN, fit=fit_FFNN, init=init_xavier):
+def get_trained_model(
+    model_param,
+    training_param,
+    data,
+    data_val=None,
+    Model=FFNN,
+    fit=fit_FFNN,
+    init=init_xavier,
+):
     nn_model = Model(**model_param)
     # Xavier weight initialization
     init(nn_model, **training_param)

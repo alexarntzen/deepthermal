@@ -37,7 +37,8 @@ def get_structured_prediction(model, data_input, sequence_stride=None):
         sequence_stride = data_input.label_width
 
     # TODO: these indices could be specified further
-    # this weird sequence construction is made so that we allways include the last element
+    # this weird sequence construction is made so that
+    # we allways include the last element
     data_indices = [i for i in range(data_input.max_len - 1, -1, -sequence_stride)][
         ::-1
     ]

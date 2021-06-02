@@ -3,11 +3,16 @@ from torch.utils.data import TensorDataset
 import numpy as np
 import pandas as pd
 from sklearn import linear_model
-from deepthermal.FFNN_model import FFNN, init_xavier
+from deepthermal.FFNN_model import init_xavier
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import plot_model_scatter, plot_result, plot_compare_scatter
-from deepthermal.multilevel import fit_multilevel_FFNN, MultilevelFFNN, MultilevelDataset, get_init_multilevel, \
-    get_multilevel_RRSE
+from deepthermal.multilevel import (
+    fit_multilevel_FFNN,
+    MultilevelFFNN,
+    MultilevelDataset,
+    get_init_multilevel,
+    get_multilevel_RRSE,
+)
 from task_solutions.task2_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
 
 # Path data
@@ -51,9 +56,15 @@ def get_detrasformed(data, sigma, scale_coefs):
 
 if __name__ == "__main__":
     # Data frame with data
-    df_train_1601 = pd.read_csv(PATH_TRAINING_DATA_1601, dtype=np.float32, sep=" ", header=None)
-    df_train_401 = pd.read_csv(PATH_TRAINING_DATA_401, dtype=np.float32, sep=" ", header=None)
-    df_train_101 = pd.read_csv(PATH_TRAINING_DATA_101, dtype=np.float32, sep=" ", header=None)
+    df_train_1601 = pd.read_csv(
+        PATH_TRAINING_DATA_1601, dtype=np.float32, sep=" ", header=None
+    )
+    df_train_401 = pd.read_csv(
+        PATH_TRAINING_DATA_401, dtype=np.float32, sep=" ", header=None
+    )
+    df_train_101 = pd.read_csv(
+        PATH_TRAINING_DATA_101, dtype=np.float32, sep=" ", header=None
+    )
     df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32, sep=" ", header=None)
     df_sobol = pd.read_csv(PATH_SOBOL_POINTS, dtype=np.float32, sep=" ", header=None)
 
@@ -71,20 +82,29 @@ if __name__ == "__main__":
     linreg_intercepts = torch.zeros(8)
     linreg_coefs = torch.zeros(8)
     for i in range(8):
-        lin_reg = linear_model.LinearRegression().fit(2 * x_sobol[:, i:i + 1] - 1, x_train_101_[:, i:i + 1])
+        lin_reg = linear_model.LinearRegression().fit(
+            2 * x_sobol[:, i : i + 1] - 1, x_train_101_[:, i : i + 1]
+        )
         linreg_coefs[i] = lin_reg.coef_.item()
         linreg_intercepts[i] = lin_reg.intercept_.item()
     SIGMA = torch.mean(linreg_coefs / linreg_intercepts).item()
     SCAlE_COEFS = linreg_coefs / SIGMA
 
     # check that the right parametrization was found
-    assert torch.max(torch.abs(x_train_101_ - SCAlE_COEFS * (1 + SIGMA * (2 * x_sobol - 1)))).item() < 1e-3
+    assert (
+        torch.max(
+            torch.abs(x_train_101_ - SCAlE_COEFS * (1 + SIGMA * (2 * x_sobol - 1)))
+        ).item()
+        < 1e-3
+    )
 
     # detransform to sobol scale
     x_train_101 = get_detrasformed(x_train_101_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_401 = get_detrasformed(x_train_401_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_1601 = get_detrasformed(x_train_1601_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
-    assert torch.max(x_train_1601 - x_train_101[:160]).item() < 1e-10  # check points in right order
+    assert (
+        torch.max(x_train_1601 - x_train_101[:160]).item() < 1e-10
+    )  # check points in right order
 
     Y_MEAN = torch.mean(y_train_101_)
     Y_STD = torch.std(y_train_101_)
@@ -108,7 +128,7 @@ if __name__ == "__main__":
         partial=True,
         folds=FOLDS,
         verbose=True,
-        get_error=get_multilevel_RRSE
+        get_error=get_multilevel_RRSE,
     )
     plot_kwargs = {
         "x_test": x_test,
@@ -116,9 +136,18 @@ if __name__ == "__main__":
         "y_train": data_train[:][1],
     }
 
-    plot_result(path_figures=PATH_FIGURES, plot_name=SET_NAME + "_compare_", **cv_results,
-                plot_function=plot_model_scatter,
-                function_kwargs=plot_kwargs)
-    plot_result(path_figures=PATH_FIGURES, plot_name=SET_NAME + "_vis", **cv_results,
-                plot_function=plot_compare_scatter,
-                function_kwargs=plot_kwargs, history=False)
+    plot_result(
+        path_figures=PATH_FIGURES,
+        plot_name=SET_NAME + "_compare_",
+        **cv_results,
+        plot_function=plot_model_scatter,
+        function_kwargs=plot_kwargs,
+    )
+    plot_result(
+        path_figures=PATH_FIGURES,
+        plot_name=SET_NAME + "_vis",
+        **cv_results,
+        plot_function=plot_compare_scatter,
+        function_kwargs=plot_kwargs,
+        history=False,
+    )

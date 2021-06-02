@@ -36,16 +36,16 @@ def get_NRMSE(model, data, type_str="", verbose=False):
 
 
 def k_fold_cv_grid(
-        Model,
-        model_param_iter,
-        fit,
-        training_param_iter,
-        data,
-        folds=5,
-        init=None,
-        partial=False,
-        verbose=False,
-        get_error=get_RRSE
+    Model,
+    model_param_iter,
+    fit,
+    training_param_iter,
+    data,
+    folds=5,
+    init=None,
+    partial=False,
+    verbose=False,
+    get_error=get_RRSE,
 ):
     models = []
     loss_history_trains = []
@@ -53,7 +53,7 @@ def k_fold_cv_grid(
     rel_train_errors = []
     rel_val_errors = []
     for model_num, (model_param, training_param) in enumerate(
-            itertools.product(model_param_iter, training_param_iter)
+        itertools.product(model_param_iter, training_param_iter)
     ):
         kf = KFold(n_splits=folds, shuffle=True)
         rel_train_errors_k = []

@@ -132,4 +132,5 @@ if __name__ == "__main__":
     )
 
 # functions to make
-# plot_result(x_test=x_test, x_train=x_train, y_train=y_train, path_figures=PATH_FIGURES, **cv_results)
+# plot_result(x_test=x_test, x_train=x_train,\
+# y_train=y_train, path_figures=PATH_FIGURES, **cv_results)

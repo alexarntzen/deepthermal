@@ -7,7 +7,11 @@ import torch.utils.data
 import numpy as np
 
 from deepthermal.FFNN_model import get_trained_model, FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import create_subdictionary_iterator, get_RRSE, k_fold_cv_grid
+from deepthermal.validation import (
+    create_subdictionary_iterator,
+    get_RRSE,
+    k_fold_cv_grid,
+)
 
 
 class TestOnSimpleFunctionApprox(unittest.TestCase):
@@ -44,11 +48,12 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "regularization_param": 1e-6,
             "optimizer": "ADAM",
             "learning_rate": 0.01,
-            "init_weight_seed": 20
+            "init_weight_seed": 20,
         }
 
-        model, loss_history_train, loss_history_val = get_trained_model(model_params, training_params,
-                                                                        data=self.data)
+        model, loss_history_train, loss_history_val = get_trained_model(
+            model_params, training_params, data=self.data
+        )
 
         rel_test_error = get_RRSE(model, self.data_test)
         self.assertAlmostEqual(0, rel_test_error, delta=0.1)
@@ -61,7 +66,9 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "output_dimension": [1],
             "n_hidden_layers": [5],
             "neurons": [10, 20],
-            "activation": ["relu", ]
+            "activation": [
+                "relu",
+            ],
         }
         training_params = {
             "num_epochs": [500],
@@ -70,18 +77,24 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "regularization_param": [1e-6],
             "optimizer": ["ADAM"],
             "learning_rate": [0.01],
-            "init_weight_seed": [15]
-
+            "init_weight_seed": [15],
         }
 
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
-                                    training_params_iterator, data=self.data,
-                                    init=init_xavier,
-                                    folds=3)
-        avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]), dim=1)
+        cv_results = k_fold_cv_grid(
+            FFNN,
+            model_params_iterator,
+            fit_FFNN,
+            training_params_iterator,
+            data=self.data,
+            init=init_xavier,
+            folds=3,
+        )
+        avg_rel_val_errors = torch.mean(
+            torch.tensor(cv_results["rel_val_errors"]), dim=1
+        )
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.1)
 
         for submodels in cv_results["models"]:
@@ -90,7 +103,9 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
                 self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
     def test_k_fold_cv_grid_partial(self):
-        print("\n\n Approximating the sine function with partial cross validation grid:")
+        print(
+            "\n\n Approximating the sine function with partial cross validation grid:"
+        )
         model_params = {
             "input_dimension": [1],
             "output_dimension": [1],
@@ -105,18 +120,26 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "regularization_param": [1e-6],
             "optimizer": ["ADAM"],
             "learning_rate": [0.01],
-            "init_weight_seed": [25]
+            "init_weight_seed": [25],
         }
 
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
-        cv_results = k_fold_cv_grid(FFNN, model_params_iterator, fit_FFNN,
-                                    training_params_iterator, data=self.data,
-                                    init=init_xavier,
-                                    folds=5, partial=True)
+        cv_results = k_fold_cv_grid(
+            FFNN,
+            model_params_iterator,
+            fit_FFNN,
+            training_params_iterator,
+            data=self.data,
+            init=init_xavier,
+            folds=5,
+            partial=True,
+        )
 
-        avg_rel_val_errors = torch.mean(torch.tensor(cv_results["rel_val_errors"]), dim=1)
+        avg_rel_val_errors = torch.mean(
+            torch.tensor(cv_results["rel_val_errors"]), dim=1
+        )
         self.assertAlmostEqual(0, torch.max(avg_rel_val_errors).item(), delta=0.1)
 
         for submodels in cv_results["models"]:
@@ -125,5 +148,5 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
                 self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

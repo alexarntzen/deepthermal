@@ -28,7 +28,7 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task5.txt"
 # Vizualization and validation parameters
 ########
 MODEL_LIST = np.arange(1)
-SET_NAME = f"model_check_1"
+SET_NAME = "model_check_1"
 FOLDS = 10
 #########
 
