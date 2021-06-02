@@ -148,7 +148,7 @@ def fit_FFNN(
 
             optimizer_.step(closure=closure)
 
-        if data_val:
+        if data_val is not None:
             x_val, y_val = next(
                 iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
             )
@@ -171,10 +171,10 @@ def fit_FFNN(
     return loss_history_train, loss_history_val
 
 
-def get_trained_model(model_param, training_param, data, data_val=None, Model=FFNN, fit=fit_FFNN):
+def get_trained_model(model_param, training_param, data, data_val=None, Model=FFNN, fit=fit_FFNN, init=init_xavier):
     nn_model = Model(**model_param)
     # Xavier weight initialization
-    init_xavier(nn_model, **training_param)
+    init(nn_model, **training_param)
 
     loss_history_train, loss_history_val = fit(
         nn_model, data, data_val=data_val, **training_param

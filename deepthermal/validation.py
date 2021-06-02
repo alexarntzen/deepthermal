@@ -6,13 +6,10 @@ from sklearn.model_selection import KFold
 
 
 # Root Relative Squared Error
-def get_RRSE(model, data, type_str="", verbose=False, predict=None):
+def get_RRSE(model, data, type_str="", verbose=False):
     # Compute the relative mean square error
     x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
-    if predict is None:
-        y_pred = model(x_data).detach()
-    else:
-        y_pred = predict(model, x_data).detach()
+    y_pred = model(x_data).detach()
     y_data_mean = torch.mean(y_data, dim=0)
     relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum(
         (y_data_mean - y_data) ** 2
@@ -28,13 +25,10 @@ def get_RRSE(model, data, type_str="", verbose=False, predict=None):
 
 
 # Normalized root-mean-square error
-def get_NRMSE(model, data, type_str="", verbose=False, predict=None):
+def get_NRMSE(model, data, type_str="", verbose=False):
     # Compute the relative mean square error
     x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
-    if predict is None:
-        y_pred = model(x_data).detach()
-    else:
-        y_pred = predict(model, x_data).detach()
+    y_pred = model(x_data).detach()
     error = torch.mean((y_pred - y_data) ** 2) ** 0.5
     if verbose:
         print(f"Root mean square {type_str} error: ", error.item() * 100, "%")
@@ -51,6 +45,7 @@ def k_fold_cv_grid(
         init=None,
         partial=False,
         verbose=False,
+        get_error=get_RRSE
 ):
     models = []
     loss_history_trains = []
@@ -81,8 +76,8 @@ def k_fold_cv_grid(
             models_k.append(model)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            rel_train_errors_k.append(get_RRSE(model, data_train_k))
-            rel_val_errors_k.append(get_RRSE(model, data_val_k))
+            rel_train_errors_k.append(get_error(model, data_train_k))
+            rel_val_errors_k.append(get_error(model, data_val_k))
 
             if partial:
                 break

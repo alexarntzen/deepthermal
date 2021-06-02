@@ -4,9 +4,30 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from deepthermal.FFNN_model import fit_FFNN, init_xavier, FFNN
 
 
+class MultilevelFFNN(FFNN):
+    def __init__(self, levels=1, **model_params):
+        self.levels = levels
+        self.models = []
+        for l in range(levels):
+            self.models.append(FFNN(**model_params))
+        super().__init__(**model_params)
+
+    def __getitem__(self, item):
+        return self.models[item]
+
+    def __call__(self, x_data):
+        y_pred = self.models[0](x_data)
+        for level in range(1, len(self.models)):
+            y_pred += self.models[level](x_data)
+        return y_pred
+
+    def __len__(self):
+        return self.levels
+
+
 # this is not the most effective way, but it is easy
 class MultilevelDataset(Dataset):
-    def __init__(self, y_tensors, x_tensor):
+    def __init__(self, x_tensor, y_tensors):
         # last tensor are the x_values
 
         self.levels = len(y_tensors)
@@ -42,37 +63,26 @@ def get_level_dataset(x_tensor, y_tensors, level):
         return x_tensor[level_indices], diff
 
 
-def fit_multilevel_FFNN(models,
+def fit_multilevel_FFNN(Models,
                         data,
-                        num_epochs,
-                        batch_size,
-                        optimizer,
-                        p=2,
-                        regularization_param=0,
-                        regularization_exp=2,
                         data_val=None,
-                        track_history=True,
-                        verbose=False,
-                        learning_rate=None,
-                        **kwargs
+                        num_epochs=100,
+                        **training_param
                         ):
-    levels = len(models)
+    levels = len(Models)
     loss_history_train_levels = torch.zeros((levels, num_epochs))
     loss_history_val_levels = torch.zeros((levels, num_epochs))
-    for level in range(len(models)):
+    for level in range(len(Models)):
         level_data = TensorDataset(*get_level_dataset(*data[:], level))
-        loss_history_train_levels[level], loss_history_val_levels[level] = fit_FFNN(model=models[level],
+        if data_val is not None:
+             level_data_val = TensorDataset(*get_level_dataset(*data_val[:], level))
+        else:
+            level_data_val = None
+        loss_history_train_levels[level], loss_history_val_levels[level] = fit_FFNN(model=Models[level],
                                                                                     data=level_data,
+                                                                                    data_val=level_data_val,
                                                                                     num_epochs=num_epochs,
-                                                                                    batch_size=batch_size,
-                                                                                    optimizer=optimizer,
-                                                                                    p=p,
-                                                                                    regularization_param=regularization_param,
-                                                                                    regularization_exp=regularization_exp,
-                                                                                    data_val=data_val,
-                                                                                    track_history=track_history,
-                                                                                    verbose=verbose,
-                                                                                    learning_rate=learning_rate
+                                                                                    **training_param
                                                                                     )
 
     # return the sum of the losses since it is not relative loss
@@ -82,26 +92,36 @@ def fit_multilevel_FFNN(models,
     return loss_history_train, loss_history_val
 
 
+def get_init_multilevel(init=init_xavier):
+    def init_multilevel(Models, **kwargs):
+        for l in range(len(Models)):
+            init(Models[l], **kwargs)
+
+    return init_multilevel
+
+
+# Root Relative Squared Error
+def get_multilevel_RRSE(model, data, type_str="", verbose=False, level=0):
+    # Compute the relative mean square error
+    x_data, y_data_list = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
+    y_data = y_data_list[level]
+    y_pred = model(x_data).detach()
+    y_data_mean = torch.mean(y_data, dim=0)
+    relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum(
+        (y_data_mean - y_data) ** 2
+    )
+    relative_error = relative_error_2 ** 0.5
+    if verbose:
+        print(
+            f"Root Relative Squared {type_str} Error: ",
+            relative_error.item() * 100,
+            "%",
+        )
+    return relative_error.item()
+
+
 def predict_multilevel(models, x_data):
     y_pred = models[0](x_data)
     for level in range(1, len(models)):
         y_pred += models[level](x_data)
     return y_pred
-
-def get_trained_multilevel_model(model_param, training_param,
-                                 multilevel_data,
-                                 data_val=None,
-                                 Model=FFNN,
-                                 fit=fit_multilevel_FFNN,
-                                 init=init_xavier
-                                 ):
-    models = []
-    for l in range(multilevel_data.levels):
-        model = Model(**model_param)
-        # Xavier weight initialization
-        init(model, **training_param)
-        models.append(model)
-    loss_history_train, loss_history_val = fit(
-        models, multilevel_data, data_val=data_val, **training_param
-    )
-    return models, loss_history_train, loss_history_val

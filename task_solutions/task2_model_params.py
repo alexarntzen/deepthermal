@@ -4,6 +4,7 @@ MODEL_PARAMS_cf = {
     "n_hidden_layers": [7],
     "neurons": [25],
     "activation": ["relu"],
+    "levels": [3]
 }
 TRAINING_PARAMS_cf = {
     "num_epochs": [5000],
