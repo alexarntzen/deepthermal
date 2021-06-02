@@ -1,9 +1,11 @@
 import unittest
 import torch
-import torch.utils
-import torch.utils.data
+from torch.utils.data import TensorDataset
+import numpy as np
 
-from deepthermal.multilevel import MultilevelDataset, get_level_dataset
+from deepthermal.multilevel import MultilevelDataset, get_level_dataset, predict_multilevel, fit_multilevel_FFNN, \
+    get_trained_multilevel_model
+from deepthermal.validation import get_RRSE
 
 
 class TestPrediction(unittest.TestCase):
@@ -11,8 +13,8 @@ class TestPrediction(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.n_samples = 2000
-        cls.x = torch.rand((cls.n_samples, 2))
-        cls.y_0 = torch.rand((cls.n_samples, 1))
+        cls.x = 2 * np.pi * torch.rand((cls.n_samples, 1))
+        cls.y_0 = torch.sin(cls.x)
         cls.y_1 = cls.y_0[:cls.n_samples // 2]
         cls.y_2 = cls.y_0[:cls.n_samples // 4]
         cls.datalist = [cls.y_0.detach().clone(), cls.y_1.detach().clone(), cls.y_2.detach().clone()]
@@ -38,6 +40,35 @@ class TestPrediction(unittest.TestCase):
                         y_train - self.datalist[l] + self.datalist[l - 1][:self.len_list[l]]
                     )).item()
                     , 0)
+
+    def test_multilevel_approx_error(self):
+        print("\n\n Approximating the sine function with a multilevel model:")
+        ml_dataset = MultilevelDataset(self.datalist, self.x)
+        model_params = {
+            "input_dimension": 1,
+            "output_dimension": 1,
+            "n_hidden_layers": 5,
+            "neurons": 10,
+            "activation": "relu",
+        }
+        training_params = {
+            "num_epochs": 500,
+            "batch_size": 500,
+            "regularization_exp": 2,
+            "regularization_param": 1e-6,
+            "optimizer": "ADAM",
+            "learning_rate": 0.01,
+            "init_weight_seed": 20
+        }
+
+        model, loss_history_train, loss_history_val = get_trained_multilevel_model(model_params,
+                                                                                   training_params,
+                                                                                   multilevel_data=ml_dataset,
+                                                                                   fit=fit_multilevel_FFNN
+                                                                                   )
+
+        rel_test_error = get_RRSE(model, TensorDataset(self.x, self.y_0), predict=predict_multilevel)
+        self.assertAlmostEqual(0, rel_test_error, delta=0.1)
 
 
 if __name__ == '__main__':

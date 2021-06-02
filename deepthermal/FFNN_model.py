@@ -13,13 +13,13 @@ activations = {"relu": nn.ReLU(), "sigmoid": nn.Sigmoid(), "tanh": nn.Tanh()}
 
 class FFNN(nn.Module):
     def __init__(
-        self,
-        input_dimension,
-        output_dimension,
-        n_hidden_layers,
-        neurons,
-        activation="relu",
-        **kwargs
+            self,
+            input_dimension,
+            output_dimension,
+            n_hidden_layers,
+            neurons,
+            activation="relu",
+            **kwargs
     ):
         super(FFNN, self).__init__()
 
@@ -86,19 +86,19 @@ def regularization(model, p):
 
 
 def fit_FFNN(
-    model,
-    data,
-    num_epochs,
-    batch_size,
-    optimizer,
-    p=2,
-    regularization_param=0,
-    regularization_exp=2,
-    data_val=None,
-    track_history=True,
-    verbose=False,
-    learning_rate=None,
-    **kwargs
+        model,
+        data,
+        num_epochs,
+        batch_size,
+        optimizer,
+        p=2,
+        regularization_param=0,
+        regularization_exp=2,
+        data_val=None,
+        track_history=True,
+        verbose=False,
+        learning_rate=None,
+        **kwargs
 ):
     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
     if learning_rate is None:
@@ -117,8 +117,8 @@ def fit_FFNN(
     else:
         raise ValueError("Optimizer not recognized")
 
-    loss_history_train = np.zeros((num_epochs))
-    loss_history_val = np.zeros((num_epochs))
+    loss_history_train = torch.zeros((num_epochs))
+    loss_history_val = torch.zeros((num_epochs))
     # Loop over epochs
     for epoch in range(num_epochs):
         if verbose:
@@ -171,12 +171,12 @@ def fit_FFNN(
     return loss_history_train, loss_history_val
 
 
-def get_trained_nn_model(model_param, training_param, data, data_val=None):
-    nn_model = FFNN(**model_param)
+def get_trained_model(model_param, training_param, data, data_val=None, Model=FFNN, fit=fit_FFNN):
+    nn_model = Model(**model_param)
     # Xavier weight initialization
     init_xavier(nn_model, **training_param)
 
-    loss_history_train, loss_history_val = fit_FFNN(
+    loss_history_train, loss_history_val = fit(
         nn_model, data, data_val=data_val, **training_param
     )
     return nn_model, loss_history_train, loss_history_val

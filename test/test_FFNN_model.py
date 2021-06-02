@@ -6,7 +6,7 @@ import torch.utils.data
 
 import numpy as np
 
-from deepthermal.FFNN_model import get_trained_nn_model, FFNN, fit_FFNN, init_xavier
+from deepthermal.FFNN_model import get_trained_model, FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import create_subdictionary_iterator, get_RRSE, k_fold_cv_grid
 
 
@@ -47,8 +47,8 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "init_weight_seed": 20
         }
 
-        model, loss_history_train, loss_history_val = get_trained_nn_model(model_params, training_params,
-                                                                           data=self.data)
+        model, loss_history_train, loss_history_val = get_trained_model(model_params, training_params,
+                                                                        data=self.data)
 
         rel_test_error = get_RRSE(model, self.data_test)
         self.assertAlmostEqual(0, rel_test_error, delta=0.1)

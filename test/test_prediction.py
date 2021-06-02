@@ -5,8 +5,6 @@ import torch.utils.data
 
 import numpy as np
 
-from deepthermal.FFNN_model import get_trained_nn_model, FFNN, fit_FFNN, init_xavier
-from deepthermal.validation import create_subdictionary_iterator, get_RRSE, k_fold_cv_grid
 from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
 
 

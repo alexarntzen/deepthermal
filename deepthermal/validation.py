@@ -6,10 +6,13 @@ from sklearn.model_selection import KFold
 
 
 # Root Relative Squared Error
-def get_RRSE(model, data, type_str="", verbose=False):
+def get_RRSE(model, data, type_str="", verbose=False, predict=None):
     # Compute the relative mean square error
     x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
-    y_pred = model(x_data).detach()
+    if predict is None:
+        y_pred = model(x_data).detach()
+    else:
+        y_pred = predict(model, x_data).detach()
     y_data_mean = torch.mean(y_data, dim=0)
     relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum(
         (y_data_mean - y_data) ** 2
@@ -25,10 +28,13 @@ def get_RRSE(model, data, type_str="", verbose=False):
 
 
 # Normalized root-mean-square error
-def get_NRMSE(model, data, type_str="", verbose=False):
+def get_NRMSE(model, data, type_str="", verbose=False, predict=None):
     # Compute the relative mean square error
     x_data, y_data = next(iter(DataLoader(data, batch_size=len(data), shuffle=False)))
-    y_pred = model(x_data).detach()
+    if predict is None:
+        y_pred = model(x_data).detach()
+    else:
+        y_pred = predict(model, x_data).detach()
     error = torch.mean((y_pred - y_data) ** 2) ** 0.5
     if verbose:
         print(f"Root mean square {type_str} error: ", error.item() * 100, "%")
@@ -36,15 +42,15 @@ def get_NRMSE(model, data, type_str="", verbose=False):
 
 
 def k_fold_cv_grid(
-    Model,
-    model_param_iter,
-    fit,
-    training_param_iter,
-    data,
-    folds=5,
-    init=None,
-    partial=False,
-    verbose=False,
+        Model,
+        model_param_iter,
+        fit,
+        training_param_iter,
+        data,
+        folds=5,
+        init=None,
+        partial=False,
+        verbose=False,
 ):
     models = []
     loss_history_trains = []
@@ -52,7 +58,7 @@ def k_fold_cv_grid(
     rel_train_errors = []
     rel_val_errors = []
     for model_num, (model_param, training_param) in enumerate(
-        itertools.product(model_param_iter, training_param_iter)
+            itertools.product(model_param_iter, training_param_iter)
     ):
         kf = KFold(n_splits=folds, shuffle=True)
         rel_train_errors_k = []
