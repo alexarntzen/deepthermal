@@ -1,14 +1,13 @@
-
 name: Compile latex
-on: 
+on:
   push:
     paths:
-    - 'report/**'
-    - '.github/workflows/compile_latex.yml'
+      - 'report/**'
+      - '.github/workflows/compile_latex.yml'
   pull_request:
     paths:
-    - 'report/**'
-    - '.github/workflows/compile_latex.yml'
+      - 'report/**'
+      - '.github/workflows/compile_latex.yml'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -36,7 +35,7 @@ jobs:
       - name: Compile LaTeX document
         uses: dante-ev/latex-action@v0.2.0
         with:
-          working_directory: report 
+          working_directory: report
           root_file: main.tex
       - uses: actions/upload-artifact@v2
         with:
