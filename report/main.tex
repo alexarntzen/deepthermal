@@ -1,22 +1,12 @@
-\documentclass[a4paper,english]{elsarticle}% 5p gir 2 kolonner pr side. 1p gir 1 kolonne pr side.
-%\documentclass[11pt,a4paper,norsk]{article} % setter hvilken type dokument. Kan også være book eller report. I klammeparantes settes fontstørrelse, papirstørrelse og språk.
+\documentclass[a4paper]{article}
 
 \usepackage[utf8]{inputenc} %- Løser problem med å skrive andre enn engelske bokstaver f.eks æ,ø,å.
-
 \usepackage[T1]{fontenc} %- Støtter koding av forskjellige fonter.
 \usepackage{textcomp} % Støtter bruk av forskjellige fonter som dollartegn, copyright, en kvart, en halv mm, se http://gcp.fcaglp.unlp.edu.ar/_media/integrantes:psantamaria:latex:textcomp.pdf
-
+\usepackage{csquotes}
 \usepackage{url} % Gjør internett- og e-mail adresser klikkbare i tex-dokumentet.
-
 \usepackage{hyperref} % Gjør referansene i tex-dokumentet klikkbare, slik at du kommer til referansen i referanselista.
-
 \usepackage[english]{babel} % Ordbok. Hvis man setter norsk i options til usepackage babel kan man bruke norske ord.
-
-\usepackage{natbib}
-\bibliographystyle{unsrtnat}
-
-\urlstyle{sf} % Velger hvilken stil url-adresser skrives, f.eks sf
-
 \usepackage{amsmath} 				% Ekstra matematikkfunksjoner.
 \usepackage{amssymb}
 \usepackage{amsfonts}
@@ -31,41 +21,20 @@
 \usepackage{placeins}
 \usepackage{bm}
 \usepackage{physics}
-
-
-
 \usepackage{siunitx}					% Må inkluderes for blant annet å få tilgang til kommandoen \SI (korrekte måltall med enheter)
 	\sisetup{exponent-product = \cdot}      	% Prikk som multiplikasjonstegn (i steden for kryss).
  	\sisetup{output-decimal-marker  =  {,}} 	% Komma som desimalskilletegn (i steden for punktum).
  	\sisetup{separate-uncertainty = true}   	% Pluss-minus-form på usikkerhet (i steden for parentes). 
-
 \usepackage{booktabs} % For å få tilgang til finere linjer (til bruk i tabeller og slikt).
-
 \usepackage[font=small,labelfont=bf]{caption}		% For justering av figurtekst og tabelltekst.
-
-
-\journal{ }
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd{\ps@pprintTitle}
-  {Preprint submitted to}
-  {}
-  {}{}
-\makeatother
-% Fjerner submitte dto 
+\usepackage[backend=biber]{biblatex}
+\addbibresource{./ref.bib}
 
 % math stuff
 \newcommand{\restr}[2]{\ensuremath{\left.#1\right|_{#2}}}
 
 % my personal commands
 \newcommand{\R}{\mathbb{R}}
-
-% Denne setter navnet på abstract til Sammendrag
-%\renewenvironment{abstract}{\global\setbox\absbox=\vbox\bgroup
-%\hsize=\textwidth\def\baselinestretch{1}%
-%\noindent\unskip\textbf{Sammendrag}
-%\par\medskip\noindent\unskip\ignorespaces}
-%{\egroup}
 
 %\clearpage % Bruk denne kommandoen dersom du vil ha ny side etter det er satt plass til figuren.
 % Disse kommandoene kan gjøre det enklere for LaTeX å plassere figurer og tabeller der du ønsker.
@@ -74,7 +43,6 @@
 \renewcommand{\topfraction}{0.95}
 \renewcommand{\bottomfraction}{0.95}
 \renewcommand{\floatpagefraction}{0.35}
-
 
 % math stuff
 \newtheorem{theorem}{Theorem}
@@ -89,38 +57,46 @@
 
 \graphicspath{{../}}
 
+\title{Project for Deep Learning in Scientific Computing}
+
+\author{Alexander Johan Arntzen }
+
+\date{\today}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
-\begin{frontmatter}
+\maketitle
 
-\title{Project}
+\section*{Task 1}
+% copied from forum do not use in final report! 
+In the fist task, first of all we processed the given dataset by linearly transforming the inputs to the domain $[0,1]^d$ and normalising the output data. Given the small amount of noise, no denoising procedure was used. We chose a feed forward fully connected neural network to approximate the underlying map. The chosen model depends  on several hyperparameters, including number of layers, neurons, activation function, etc. We performed an ensemble training to select the learning rate and the regularization parameters while fixing the remaining ones. Among the hyperparameters configurations, we chose the one resulting in the lowest value of the training error. For each configuration of the hyper parameters we also retrained the model 5 times, with different initialisation of the parameters (He initialisation was used), and picked again the best trained model.
 
-\author[matematikk]{Alexander Johan Arntzen }
+% \begin{figure}[ht]
+%   \begin{subfigure}[b]{0.5\textwidth}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/task1/result_relu_1_tf0_0.pdf}
+%     \caption{Solution for tf0}
+%     \label{solution-error-dirichlet}
+%   \end{subfigure}\qquad
+%   \begin{subfigure}[b]{0.5\textwidth}
+%     \centering
+%     \includegraphics[width=\linewidth]{figures/task1/result_relu_1_ts0_0.pdf}
+%     \caption{Solution for ts0}
+%     \label{solution-error-mixed}
+%   \end{subfigure}
+%   \label{plot-solution-error}
+%   \caption{empty}
+% \end{figure}
 
-\address[matematikk]{Department of Mathematical Science, Norwegian University of Science and Technology, N-7491 Trondheim, Norway.}
+\section*{Task 2}
+\section*{Task 3}
 
+\section*{Task 4}
+\section*{Task 5}
+Something something\cite{kingma2017adam}
 
-\begin{abstract}
-Test
-\end{abstract}
-
-\end{frontmatter}
-
-\begin{equation}
-    \sigma = \int_{[-1,-1]}{|\frac{X(g)}{\overline{X_0}}-1\!\!1|\,dg} \sim \frac{||-1,1]|}{N} \sum_{i=1}^{N}{|\frac{X(G_i)}{\overline{X_0}}-1|}
-    \label{eq:equation}
-\end{equation}
-
-\begin{equation}
-    X_o = \int_{[-1,-1]}{X(g)\,dg} \sim \frac{||-1,1]|}{N} \sum_{i=1}^{N}{X(G_i)}
-    \label{eq:equation}
-\end{equation}
-
-
-\cite{kingma2017adam}
-\bibliography{ref}
-
+\printbibliography
 \end{document}
 
 
