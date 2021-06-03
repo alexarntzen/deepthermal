@@ -28,7 +28,7 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task5.txt"
 # Vizualization and validation parameters
 ########
 MODEL_LIST = np.arange(1)
-SET_NAME = "model_check_1"
+SET_NAME = "model_check_few_points_0"
 FOLDS = 10
 #########
 
@@ -52,12 +52,12 @@ def plot_task5(
     ax.set_xlabel("D")
     ax.set_ylabel("v")
     ax.set_title("Cost function minimizer vizualization")
-    ax.scatter(
-        x_sampled[:, 0], x_sampled[:, 1], c=pred_sampled[:, 0], label="sampled points"
-    )
+    pred_scatter = ax.scatter(x_sampled[:, 0], x_sampled[:, 1], c=pred_sampled[:, 0])
     ax.scatter(
         x_minimizer[:, 0], x_minimizer[:, 1], color="orange", label="minimizer points"
     )
+    pred_legend = ax.legend(*pred_scatter.legend_elements(), title="sampled points")
+    ax.add_artist(pred_legend)
     ax.legend()
     plt.savefig(f"{path_figures}/{plot_name}.pdf")
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     )
 
     # plot model tp check that it is right
-    n_samples = 1000
+    n_samples = 20
 
     x_sampling_sobol = sobol.Sobol(dimension=2, graycode=True)
     x_sample = x_sampling_sobol.gen_samples(n_samples).astype(np.float32)
