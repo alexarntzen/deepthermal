@@ -2,7 +2,7 @@ import torch.utils.data
 import numpy as np
 import pandas as pd
 
-from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
+from deepthermal.FFNN_model import fit_FFNN
 from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
 from deepthermal.plotting import plot_model_history, plot_result_sorted
 from task_solutions.task3_model_params import (
@@ -11,7 +11,7 @@ from task_solutions.task3_model_params import (
     INPUT_WIDTH,
     LABEL_WIDTH,
 )
-from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
+from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction, LSTM
 
 # Path data
 ########
@@ -23,9 +23,9 @@ PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task3.txt"
 
 # Vizualization and validation parameters
 ########
-DATA_COLUMN = "tf0"
+DATA_COLUMN = "ts0"
 MODEL_LIST = np.arange(1)
-SET_NAME = f"line_test_{INPUT_WIDTH}_{DATA_COLUMN}"
+SET_NAME = f"line_test_LSTM_{DATA_COLUMN}"
 FOLDS = 10
 #########
 # encoder decoder lstm
@@ -105,19 +105,19 @@ if __name__ == "__main__":
     data_train = (data_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
 
     data = TimeSeriesDataset(
-        data_train[:, 0], input_width=INPUT_WIDTH, label_width=LABEL_WIDTH
+        data_train, input_width=INPUT_WIDTH, label_width=LABEL_WIDTH
     )
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
     cv_results = k_fold_cv_grid(
-        Model=FFNN,
+        Model=LSTM,
         model_param_iter=model_params_iter,
         fit=fit_FFNN,
         training_param_iter=training_params_iter,
         data=data,
-        init=init_xavier,
+        init=None,
         partial=True,
         folds=FOLDS,
         verbose=True,

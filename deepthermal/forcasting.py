@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset
 
 
@@ -57,3 +58,20 @@ def get_structured_prediction(model, data_input, sequence_stride=None):
 
     # returns time indices and predictions for those indices
     return pred_time_indices, torch.flatten(data_pred)
+
+
+class LSTM(nn.Module):
+    def __init__(self, input_dimension, output_dimension, neurons, num_layers=1):
+        super().__init__()
+        self.hidden_layer_size = neurons
+
+        self.lstm = nn.LSTM(
+            input_dimension, neurons, batch_first=True, num_layers=num_layers
+        )
+
+        self.linear = nn.Linear(neurons, output_dimension)
+
+    def forward(self, input_seq):
+        lstm_out, _ = self.lstm(input_seq)
+        predictions = self.linear(lstm_out)
+        return predictions

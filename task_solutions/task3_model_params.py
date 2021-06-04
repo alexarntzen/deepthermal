@@ -1,11 +1,9 @@
-INPUT_WIDTH = 21
+INPUT_WIDTH = 34
 LABEL_WIDTH = 34
 MODEL_PARAMS_cf = {
-    "input_dimension": [INPUT_WIDTH],
-    "output_dimension": [LABEL_WIDTH],
-    "n_hidden_layers": [10],
+    "input_dimension": [1],
+    "output_dimension": [1],
     "neurons": [40],
-    "activation": ["relu"],
 }
 TRAINING_PARAMS_cf = {
     "num_epochs": [3000],

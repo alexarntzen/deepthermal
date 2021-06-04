@@ -36,7 +36,7 @@ class TestOptimizer(unittest.TestCase):
         b = torch.rand(1)
 
         def cost(v):
-            return (v[1] - a * v[0] - b) ** 2 + v[0]
+            return torch.sum((v[..., 1] - a * v[..., 0] - b) ** 2 + v[..., 0])
 
         optim = torch.tensor([0, b])
         return cost, optim
@@ -45,7 +45,15 @@ class TestOptimizer(unittest.TestCase):
         print("\n\n Testing the optimizer on 20 unconstrained problems:")
         for d in range(1, 10):
             cost, optim = self.get_unconstrained_cost(d)
-            x_0 = torch.rand(d)
+            x_0 = torch.rand((d))
+            x_opt = argmin(cost, x_0)
+            self.assertAlmostEqual(
+                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
+            )
+        # test on many rows
+        for d in range(1, 10):
+            cost, optim = self.get_unconstrained_cost(d)
+            x_0 = torch.rand((10, d))
             x_opt = argmin(cost, x_0)
             self.assertAlmostEqual(
                 torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
@@ -73,6 +81,15 @@ class TestOptimizer(unittest.TestCase):
                 torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
             )
 
+        # quad problem with solution in box, with 10 rows
+        for d in range(1, 10):
+            cost, optim = self.get_unconstrained_cost(d)
+            x_0 = torch.rand((10, d))
+            x_opt = argmin(cost, x_0, box_constraint=[0, 1])
+            self.assertAlmostEqual(
+                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
+            )
+
         # quad problem with solution in box
         for d in range(1, 10):
             cost, optim = self.get_unconstrained_cost_quad(d)
@@ -86,6 +103,14 @@ class TestOptimizer(unittest.TestCase):
         print("\n\n Testing optimizer on a constrained problem:")
         cost, optim = self.get_constrained_cost()
         x_0 = torch.rand(2)
+        x_opt = argmin(cost, x_0, box_constraint=[0, 1])
+        self.assertAlmostEqual(
+            torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
+        )
+
+        # test previous optimization with many rows
+        cost, optim = self.get_constrained_cost()
+        x_0 = torch.rand((10, 2))
         x_opt = argmin(cost, x_0, box_constraint=[0, 1])
         self.assertAlmostEqual(
             torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5

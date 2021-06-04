@@ -183,7 +183,8 @@ def get_trained_model(
 ):
     nn_model = Model(**model_param)
     # Xavier weight initialization
-    init(nn_model, **training_param)
+    if init is not None:
+        init(nn_model, **training_param)
 
     loss_history_train, loss_history_val = fit(
         nn_model, data, data_val=data_val, **training_param
