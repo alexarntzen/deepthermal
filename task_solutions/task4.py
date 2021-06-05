@@ -6,10 +6,17 @@ import pandas as pd
 from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
 from deepthermal.validation import (
     k_fold_cv_grid,
+    get_scaled_results,
     create_subdictionary_iterator,
 )
 from deepthermal.plotting import plot_result
-from task_solutions.task4_model_params import MODEL_PARAMS_T, TRAINING_PARAMS_T, V_GUESS
+from task_solutions.task4_model_params import (
+    MODEL_PARAMS_T,
+    TRAINING_PARAMS_T,
+    V_GUESS_,
+    SET_NAME,
+    FOLDS,
+)
 from deepthermal.optimization import argmin
 
 # some notes, use lbfgs?
@@ -19,27 +26,12 @@ from deepthermal.optimization import argmin
 PATH_FIGURES = "figures/task4"
 PATH_TRAINING_DATA = "Task4/TrainingData.txt"
 PATH_MEASURED_DATA = "Task4/MeasuredData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task4.txt"
+PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task4.txt"
 ########
 
-# Vizualization and validation parameters
-########
-MODEL_LIST = np.arange(1)
-SET_NAME = "model_check_1"
-FOLDS = 5
-#########
 
 model_params = MODEL_PARAMS_T
 training_params = TRAINING_PARAMS_T
-
-
-# def make_submission(model):
-#     # Data frame with data
-#     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
-#     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-#     y_pred = model(x_test).detach()
-#     df_test[DATA_COLUMN] = y_pred[:, 0]
-#     df_test.to_csv(PATH_SUBMISSION, index=False)
 
 
 def plot_task4(
@@ -51,15 +43,14 @@ def plot_task4(
     v_guess=0.5,
 ):
     num_t = data_measured.shape[0]
-    data_plotting = torch.zeros((num_t, 2))
-    data_plotting[:, 0] = data_measured[:, 0]
-    data_plotting[:, 1] = v_guess
+    data_plotting_guess = torch.zeros((num_t, 2))
+    data_plotting_guess[:, 0] = data_measured[:, 0]
+    data_plotting_guess[:, 1] = v_guess
     temp_pred = model(data_train[:, 0:2]).detach()
-    check_v_pred = model(data_plotting).detach()
+    check_v_pred = model(data_plotting_guess).detach()
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.set_xlabel("t")
     ax.set_ylabel("T")
-    ax.set_title("Compare mesurements to computed solutions")
     ax.plot(
         data_measured[:, 0],
         data_measured[:, 1],
@@ -76,7 +67,7 @@ def plot_task4(
         marker="x",
     )
     ax.plot(
-        data_plotting[:, 0],
+        data_plotting_guess[:, 0],
         check_v_pred[:, 0],
         lw=2,
         color="blue",
@@ -93,13 +84,17 @@ def plot_task4(
     )
     ax.legend(*scatter.legend_elements(), loc="lower right", title="v")
     ax.add_artist(legend)
-    plt.savefig(f"{path_figures}/{plot_name}.pdf")
+    fig.savefig(f"{path_figures}/{plot_name}.pdf")
+    plt.close(fig)
 
 
 # functional style is great, but might not be optimized for python
+# big T is temperature, little t is time
 def get_G(t, T, approx_T):
     def G(v):
-        data = torch.stack((t, v.tile((t.shape[0],))), dim=1)
+        # creates a tensor with rows: [t_i, v]
+        v_tensor = torch.tile(v, t.shape)
+        data = torch.cat((t, v_tensor), dim=1)
         return torch.mean((T - approx_T(data)) ** 2)
 
     return G
@@ -111,33 +106,33 @@ if __name__ == "__main__":
     df_measured = pd.read_csv(
         PATH_MEASURED_DATA, dtype=np.float32, sep=" ", header=None
     )
-    df_train.columns = ["t", "v", "T"]
-    df_measured.columns = ["t", "T"]
 
-    # Load data
-    data_train_ = torch.tensor(
-        df_train.sort_values(by=["v"]).values
-    )  # 0 time, 1 Temperature
-    data_measured_ = torch.tensor(
-        df_measured.values, requires_grad=False
-    )  # 0 time, 1 velocity, 2 Temperature
+    # Load data: 0 time, 1 velocity, 2 Temperature
+    data_train_ = torch.tensor(df_train.values)
+    x_train_ = data_train_[:, 0:2]
+    y_train_ = data_train_[:, 2:3]
 
-    # Normalize
-    DATA_TRAIN_MAX = torch.max(data_train_, dim=0)[0]
-    DATA_TRAIN_MIN = torch.min(data_train_, dim=0)[0]
-    DATA_TRAIN_MIN[0] = 0
-    DATA_TRAIN_MAX[0] = 0.25
-    DATA_CENTER = DATA_TRAIN_MIN
-    DATA_SCALE = DATA_TRAIN_MAX - DATA_TRAIN_MIN
+    # 0 time, 1 Temperature
+    data_measured_ = torch.tensor(df_measured.values, requires_grad=False)
 
-    data_train = (data_train_ - DATA_CENTER) / DATA_SCALE
-    data_measured = (data_measured_ - DATA_CENTER[[0, 2]]) / DATA_SCALE[[0, 2]]
-    v_guess_ = (V_GUESS - DATA_CENTER[1]) / DATA_SCALE[1]
+    # Normalize data
+    X_MAX = torch.max(x_train_, dim=0)[0]
+    X_MIN = torch.min(x_train_, dim=0)[0]
+    X_CENTER = X_MIN
+    X_SCALE = X_MAX - X_MIN
+    Y_MAX = torch.max(y_train_, dim=0)[0]
+    Y_MIN = torch.min(y_train_, dim=0)[0]
+    Y_CENTER = Y_MIN
+    Y_SCALE = Y_MAX - Y_MIN
+    MEASURED_CENTER = torch.tensor([X_CENTER[0], Y_CENTER[0]])
+    MEASURED_SCALE = torch.tensor([X_SCALE[0], Y_SCALE[0]])
+    x_train = (x_train_ - X_CENTER) / X_SCALE
+    y_train = (y_train_ - Y_CENTER) / Y_SCALE
+    data_measured = (data_measured_ - MEASURED_CENTER) / MEASURED_SCALE
+    v_guess = (V_GUESS_ - X_CENTER[1]) / X_SCALE[1]
 
     # structure data
-    data_model_train = torch.utils.data.TensorDataset(
-        data_train[:, 0:2], data_train[:, 2:3]
-    )
+    data_train = torch.utils.data.TensorDataset(x_train, y_train)
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
@@ -147,48 +142,48 @@ if __name__ == "__main__":
         model_param_iter=model_params_iter,
         fit=fit_FFNN,
         training_param_iter=training_params_iter,
-        data=data_model_train,
+        data=data_train,
         init=init_xavier,
-        partial=True,
+        partial=False,
         folds=FOLDS,
         verbose=True,
     )
-
-    # plot model
-    SET_NAME_1 = SET_NAME + "1"
-    plot_kwargs1 = {
-        "v_guess": v_guess_,
-        "data_train": data_train,
-        "data_measured": data_measured,
-    }
-    plot_result(
-        path_figures=PATH_FIGURES,
-        model_list=MODEL_LIST,
-        plot_name=SET_NAME_1,
-        **cv_results,
-        plot_function=plot_task4,
-        function_kwargs=plot_kwargs1,
+    cv_results_scaled = get_scaled_results(
+        cv_results,
+        x_center=X_CENTER,
+        x_scale=X_SCALE,
+        y_center=Y_CENTER,
+        y_scale=Y_SCALE,
     )
 
-    # optimization
-    t_tensor = data_measured[:, 0]
-    T_tensor = data_measured[:, 1]
-    model = cv_results["models"][0][0]
-    G = get_G(t_tensor, T_tensor, model)
-    v_opt = argmin(G, v_guess_)
-    print("final_v: ", v_opt, v_guess_)
+    # chose models and scale them
+    model = cv_results["models"][0][4]
 
-    SET_NAME_2 = SET_NAME + "2"
+    # optimization on the normalized problem
+    t_tensor = data_measured[:, 0:1]
+    T_tensor = data_measured[:, 1:2]
+    G = get_G(t_tensor, T_tensor, model)
+    v_opt = argmin(G, v_guess)
+    v_opt_ = v_opt * X_SCALE[1] + X_CENTER[1]
+
+    # # plot loss
+    # v = torch.linspace(0.2, 1, 100)
+    # g = torch.zeros_like(v)
+    # for i in range(len(v)):
+    #     g[i] = G(v[i])
+    # plt.plot(v, g.detach())
+    # plt.show()
+
+    print("final_v: ", v_opt_)
     plot_kwargs2 = {
-        "v_guess": v_opt,
-        "data_train": data_train,
-        "data_measured": data_measured,
+        "v_guess": v_opt_,
+        "data_train": data_train_,
+        "data_measured": data_measured_,
     }
     plot_result(
         path_figures=PATH_FIGURES,
-        model_list=MODEL_LIST,
-        plot_name=SET_NAME_2,
-        **cv_results,
+        plot_name=SET_NAME,
+        **cv_results_scaled,
         plot_function=plot_task4,
         function_kwargs=plot_kwargs2,
     )

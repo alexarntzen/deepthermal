@@ -87,7 +87,7 @@ class TestOptimizer(unittest.TestCase):
             x_0 = torch.rand((10, d))
             x_opt = argmin(cost, x_0, box_constraint=[0, 1])
             self.assertAlmostEqual(
-                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
+                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-4
             )
 
         # quad problem with solution in box
@@ -96,7 +96,7 @@ class TestOptimizer(unittest.TestCase):
             x_0 = torch.rand(d)
             x_opt = argmin(cost, x_0, box_constraint=[0, 1])
             self.assertAlmostEqual(
-                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-5
+                torch.max(torch.abs(x_opt - optim)).item(), 0, delta=1e-3
             )
 
     def test_constrained(self):

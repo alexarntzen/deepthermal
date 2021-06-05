@@ -52,13 +52,17 @@ def plot_result_sorted(
     x_train=None,
     y_train=None,
     plot_name="vis_model",
+    x_axis="",
+    y_axis="",
     path_figures="../figures",
 ):
     fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_xlabel(x_axis)
+    ax.set_ylabel(y_axis)
     if x_train is not None and y_train is not None:
-        ax.plot(x_train, y_train, ".-.", label="training_data")
+        ax.plot(x_train, y_train, ".:", label="training data", lw=2, mew=1)
     if x_pred is not None and y_pred is not None:
-        ax.plot(x_pred, y_pred, ".", label="prediction")
+        ax.plot(x_pred, y_pred, "-", label="prediction", lw=2)
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
@@ -119,24 +123,9 @@ def plot_compare_scatter(
 
 
 # plot visualization
-def plot_model_1d(
-    model,
-    x_test,
-    plot_name="vis_model",
-    x_train=None,
-    y_train=None,
-    path_figures="../figures",
-):
-    fig, ax = plt.subplots(figsize=(8, 6))
-    for i in range(model.output_dimension):
-        if x_train is not None and y_train is not None:
-            ax.scatter(x_train[:, 0], y_train[:, i], label=f"train_{i}")
-        ax.plot(
-            x_test[:, 0], model(x_test)[:, i].detach(), label=f"pred_{i}", lw=2, ls="-."
-        )
-    ax.legend()
-    fig.savefig(f"{path_figures}/{plot_name}.pdf")
-    plt.close(fig)
+def plot_model_1d(model, x_test, **kwargs):
+    y_pred = model(x_test).detach()
+    plot_result_sorted(y_pred=y_pred, x_pred=x_test, **kwargs)
 
 
 def plot_result(

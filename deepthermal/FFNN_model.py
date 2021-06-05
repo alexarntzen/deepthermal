@@ -190,3 +190,10 @@ def get_trained_model(
         nn_model, data, data_val=data_val, **training_param
     )
     return nn_model, loss_history_train, loss_history_val
+
+
+def get_scaled_model(model, x_center=0, x_scale=1, y_center=0, y_scale=1):
+    def scaled_model(x):
+        return model((x - x_center) / x_scale) * y_scale + y_center
+
+    return scaled_model

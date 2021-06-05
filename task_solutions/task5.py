@@ -81,13 +81,13 @@ if __name__ == "__main__":
     x_train_ = data_train_[:, 0:2]
     y_train_ = data_train_[:, 2:3]
 
-    # Normalize and standardize
+    # Normalize
     X_TRAIN_MAX = torch.tensor([20.0, 400.0])
     X_TRAIN_MIN = torch.tensor([2.0, 50.0])
     X_CENTER = X_TRAIN_MIN
     X_SCALE = X_TRAIN_MAX - X_TRAIN_MIN
-    Y_CENTER = torch.mean(y_train_)
-    Y_SCALE = torch.std(y_train_)
+    Y_CENTER = 0
+    Y_SCALE = 1
 
     x_train = (x_train_ - X_CENTER) / X_SCALE
     y_train = (y_train_ - Y_CENTER) / Y_SCALE
