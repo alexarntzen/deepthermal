@@ -1,15 +1,23 @@
+import pandas
 import torch.utils.data
 import numpy as np
 import pandas as pd
 
 from deepthermal.FFNN_model import fit_FFNN
-from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
-from deepthermal.plotting import plot_model_history, plot_result_sorted
+from deepthermal.validation import (
+    k_fold_cv_grid,
+    create_subdictionary_iterator,
+    get_scaled_results,
+)
+from deepthermal.plotting import plot_result, plot_result_sorted
 from task_solutions.task3_model_params import (
-    MODEL_PARAMS_cf,
-    TRAINING_PARAMS_cf,
+    model_params,
+    training_params,
     INPUT_WIDTH,
     LABEL_WIDTH,
+    FOLDS,
+    SET_NAME,
+    DATA_COLUMN,
 )
 from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction, LSTM
 
@@ -18,74 +26,33 @@ from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction,
 PATH_FIGURES = "figures/task3"
 PATH_TRAINING_DATA = "Task3/TrainingData.txt"
 PATH_TESTING_POINTS = "Task3/TestingData.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task3.txt"
+PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task3.txt"
 ########
 
-# Vizualization and validation parameters
-########
-DATA_COLUMN = "ts0"
-MODEL_LIST = np.arange(1)
-SET_NAME = f"line_test_LSTM_{DATA_COLUMN}"
-FOLDS = 10
-#########
-# encoder decoder lstm
-
-model_params = MODEL_PARAMS_cf
-training_params = TRAINING_PARAMS_cf
 
 model_params_iter = create_subdictionary_iterator(model_params)
 training_params_iter = create_subdictionary_iterator(training_params)
 
 
-# printing model errors
-def print_model_errors(rel_val_errors, **kwargs):
-    for i, rel_val_error_list in enumerate(rel_val_errors):
-        avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
-        print(f"Model {i} validation error: {avg_error * 100}%")
+def plot_task3(model, t_pred, data_train, t_train, **kwargs):
+    t_indices, y_pred = get_structured_prediction(model, data_train)
+    y_train = data_train.data
+    x_pred = torch.cat((t_train, t_pred))[t_indices]
+    x_train = t_train
+
+    plot_result_sorted(
+        x_pred=x_pred, y_pred=y_pred, x_train=x_train, y_train=y_train, **kwargs
+    )
 
 
-def plot_result(
-    models,
-    data_train,
-    loss_history_trains,
-    loss_history_vals,
-    rel_val_errors,
-    t_train=None,
-    t_pred=None,
-    **kwargs,
-):
-    print_model_errors(rel_val_errors)
-    for i in MODEL_LIST:
-        plot_model_history(
-            models[i],
-            loss_history_trains[i],
-            loss_history_vals[i],
-            plot_name=(SET_NAME + f"_{i}"),
-            path_figures=PATH_FIGURES,
-        )
-        for j in range(len(models[i])):
-            t_indices, y_pred = get_structured_prediction(models[i][j], data_train)
-
-            x_pred = torch.cat((t_train, t_pred))[t_indices]
-            x_train = t_train
-            y_train = data_train.data
-
-            plot_result_sorted(
-                x_pred=x_pred,
-                y_pred=y_pred,
-                x_train=x_train,
-                y_train=y_train,
-                plot_name=f"{SET_NAME}_{i}_{j}",
-                path_figures=PATH_FIGURES,
-            )
-
-    # def make_submission(model):
-    #     # Data frame with data
-    #     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
-    #     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-    #     y_pred = model(x_test).detach()
-    #     df_test[DATA_COLUMN] = y_pred[:, 0]
-    #     df_test.to_csv(PATH_SUBMISSION, index=False)
+def make_submission(model):
+    # Data frame with data
+    df_sub = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
+    # df_sub = pd.DataFrame()
+    df_sub["t"] = t_pred_[:, 0]
+    _, y_pred = get_structured_prediction(model, data, prediction_only=True)
+    df_sub[DATA_COLUMN] = y_pred[:, 0]
+    df_sub.to_csv(PATH_SUBMISSION, index=False)
 
 
 if __name__ == "__main__":
@@ -94,23 +61,27 @@ if __name__ == "__main__":
     df_test = pd.read_csv(PATH_TESTING_POINTS, dtype=np.float32)
 
     # Load data
-    data_train_ = torch.tensor(df_train[[DATA_COLUMN]].values)
-    t_train = torch.tensor(df_train[["t"]].values)
-    t_pred = torch.tensor(df_test[["t"]].values)
+    y_train_ = torch.tensor(df_train[[DATA_COLUMN]].values)
+    t_train_ = torch.tensor(df_train[["t"]].values)
+    t_pred_ = torch.tensor(df_test[["t"]].values)
 
-    # Standardise values
-    # Normalize values
-    X_TRAIN_MEAN = torch.mean(data_train_)
-    X_TRAIN_STD = torch.std(data_train_)
-    data_train = (data_train_ - X_TRAIN_MEAN) / X_TRAIN_STD
+    # Normalize data
+    Y_MAX = torch.max(y_train_, dim=0)[0]
+    Y_MIN = torch.min(y_train_, dim=0)[0]
+    Y_CENTER = Y_MIN
+    Y_SCALE = Y_MAX - Y_MIN
+    y_train = (y_train_ - Y_CENTER) / Y_SCALE
 
-    data = TimeSeriesDataset(
-        data_train, input_width=INPUT_WIDTH, label_width=LABEL_WIDTH
+    # structure data
+    data_ = TimeSeriesDataset(
+        y_train_, input_width=INPUT_WIDTH, label_width=LABEL_WIDTH
     )
+    data = TimeSeriesDataset(y_train, input_width=INPUT_WIDTH, label_width=LABEL_WIDTH)
 
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
+    # do training with cross validation
     cv_results = k_fold_cv_grid(
         Model=LSTM,
         model_param_iter=model_params_iter,
@@ -118,17 +89,30 @@ if __name__ == "__main__":
         training_param_iter=training_params_iter,
         data=data,
         init=None,
-        partial=True,
+        partial=False,
         folds=FOLDS,
         verbose=True,
     )
-
+    cv_results_scaled = get_scaled_results(
+        cv_results,
+        x_center=Y_CENTER,
+        x_scale=Y_SCALE,
+        y_center=Y_CENTER,
+        y_scale=Y_SCALE,
+    )
+    plot_kwargs = {
+        "t_pred": t_pred_,
+        "data_train": data_,
+        "t_train": t_train_,
+        "x_axis": "t",
+        "y_axis": "T",
+    }
     plot_result(
-        data_train=data,
-        t_train=t_train,
-        t_pred=t_pred,
         path_figures=PATH_FIGURES,
-        **cv_results,
+        plot_name=SET_NAME,
+        **cv_results_scaled,
+        plot_function=plot_task3,
+        function_kwargs=plot_kwargs,
     )
 
 # functions to make

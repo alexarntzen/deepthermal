@@ -1,3 +1,5 @@
+SET_NAME = "ML_111_"
+FOLDS = 5
 MODEL_PARAMS_cf = {
     "input_dimension": [8],
     "output_dimension": [1],

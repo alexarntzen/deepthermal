@@ -72,6 +72,7 @@
 % copied from forum do not use in final report! 
 In the fist task, first of all we processed the given dataset by linearly transforming the inputs to the domain $[0,1]^d$ and normalising the output data. Given the small amount of noise, no denoising procedure was used. We chose a feed forward fully connected neural network to approximate the underlying map. The chosen model depends  on several hyperparameters, including number of layers, neurons, activation function, etc. We performed an ensemble training to select the learning rate and the regularization parameters while fixing the remaining ones. Among the hyperparameters configurations, we chose the one resulting in the lowest value of the training error. For each configuration of the hyper parameters we also retrained the model 5 times, with different initialisation of the parameters (He initialisation was used), and picked again the best trained model.
 
+Some denoising algorims where attempted, but they removed consistent features
 % \begin{figure}[ht]
 %   \begin{subfigure}[b]{0.5\textwidth}
 %     \centering
@@ -94,7 +95,8 @@ In the fist task, first of all we processed the given dataset by linearly transf
 
 \section*{Task 4}
 \section*{Task 5}
-Something something\cite{kingma2017adam}
+
+The code for this project can be found on \cite{Arntzen2021}
 
 \printbibliography
 \end{document}
