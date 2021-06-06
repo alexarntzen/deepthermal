@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import TensorDataset
 import numpy as np
@@ -11,15 +10,7 @@ from deepthermal.validation import (
     get_scaled_results,
 )
 from deepthermal.plotting import plot_model_scatter, plot_result, plot_compare_scatter
-from deepthermal.multilevel import (
-    fit_multilevel_FFNN,
-    MultilevelFFNN,
-    MultilevelDataset,
-    FFNN,
-    fit_FFNN,
-    get_init_multilevel,
-    get_multilevel_RRSE,
-)
+from deepthermal.FFNN_model import FFNN, fit_FFNN  # to bad multilevel vas not used :(
 from task_solutions.task2_model_params import (
     MODEL_PARAMS_cf,
     TRAINING_PARAMS_cf,
