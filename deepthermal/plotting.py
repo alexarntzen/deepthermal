@@ -4,7 +4,6 @@ import torch
 
 from deepthermal.validation import print_model_errors
 
-
 def get_disc_str(model):
     params = {
         "activation": model.activation,
@@ -80,7 +79,7 @@ def plot_model_scatter(
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.set_ylabel(r"$y$")
     ax.set_xlabel(r"$||x||$")
-    for i in range(model.output_dimension):
+    for i in range(y_train.size(-1)):
         if x_train is not None and y_train is not None:
             ax.scatter(
                 torch.norm(x_train, p=2, dim=1),
@@ -109,7 +108,7 @@ def plot_compare_scatter(
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.set_xlabel("Actual data")
     ax.set_ylabel("Predicted data")
-    for i in range(model.output_dimension):
+    for i in range(y_train.size(-1)):
         ax.scatter(
             y_train[:, i],
             model(x_train).detach()[:, i],

@@ -118,8 +118,9 @@ def print_model_errors(rel_val_errors, **kwargs):
 
 def get_scaled_results(cv_results, x_center=0, x_scale=1, y_center=0, y_scale=1):
     cv_results_scaled = cv_results.copy()
-    cv_results_scaled["models"] = [[]]
+    cv_results_scaled["models"] = []
     for i in range(len(cv_results["models"])):
+        cv_results_scaled["models"].append([])
         for j in range(len(cv_results["models"][i])):
             cv_results_scaled["models"][i].append(
                 get_scaled_model(

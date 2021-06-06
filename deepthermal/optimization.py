@@ -9,7 +9,9 @@ def argmin(G, y_0, lr=None, epochs=1000, verbose=False, box_constraint=None):
     if box_constraint is not None:
         if lr is None:
             lr = 0.01
-        optimizer = optim.Adam([y_opt], lr=lr)
+
+        # ADAM can also be used here
+        optimizer = optim.SGD([y_opt], lr=lr)
 
         for _ in range(epochs):
 
