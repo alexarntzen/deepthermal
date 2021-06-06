@@ -91,7 +91,7 @@ A feed forward fully connected neural network was chosen to approximate the map.
   \end{figure}
 
 \section*{Task 2}
-In this task both the Sobol points and the transformed points were given. By using linear regression, the parameters of the transformation was found. It was then observed that the points used in the finest mesh solutions also existed in the coarser solutions. Thus, it was possible to aggregate all mesh in one tensor. The $CF$ values where then standardized, since they approximated a normal distribution. 
+In this task both the Sobol points and the transformed points were given. By using linear regression, the parameters of the transformation was found. It was then observed that the points used in the finest mesh solutions also existed in the coarser solutions. Thus, it was possible to use the more accurate $CF$ values where they where available. The $CF$ values where then standardized, since they approximated a normal distribution. 
 Training a feed forward fully connected neural network on the aggregated data gave better results than a multilevel\cite{lye2020multilevel} approach. Ensemble training was then performed to select the optimal hyperparameters using cross validation error as a selection criterion. The final model was trained 10 times, and the lowest validation error was chosen. A plot of the predicted $CF$ values can be found in Figure \ref{fig:task2}  
 \begin{figure}[ht]
     \centering
@@ -151,7 +151,7 @@ was minimized using SGD with projected gradient 1000 starting points as in the D
 \end{figure}
 
 \section*{Appendix}
-The code for this project can be found on \url{https://github.com/alexarntzen/deepthermal}
+The code for this project can be found at \url{https://github.com/alexarntzen/deepthermal}
 
 \FloatBarrier
 \printbibliography

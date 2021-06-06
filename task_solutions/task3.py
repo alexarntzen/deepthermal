@@ -1,4 +1,3 @@
-import pandas
 import torch.utils.data
 import numpy as np
 import pandas as pd
@@ -63,7 +62,7 @@ def make_submission(model):
     df_sub = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
     # df_sub = pd.DataFrame()
     df_sub["t"] = t_pred_[:, 0]
-    _, y_pred = get_structured_prediction(model, data, prediction_only=True)
+    _, y_pred = get_structured_prediction(model, data_, prediction_only=True)
     df_sub[DATA_COLUMN] = y_pred[:, 0]
     df_sub.to_csv(PATH_SUBMISSION, index=False)
 

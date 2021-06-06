@@ -37,5 +37,5 @@ TRAINING_PARAMS_ts0 = {
     "optimizer": ["LBFGS"],
     "learning_rate": [0.01],
 }
-model_params = MODEL_PARAMS_ts0
-training_params = TRAINING_PARAMS_ts0
+model_params = MODEL_PARAMS_tf0
+training_params = TRAINING_PARAMS_tf0

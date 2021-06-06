@@ -1,5 +1,3 @@
-# might be linear
-# takes about an hour for 1000 points
 import torch.utils.data
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,8 +17,6 @@ from task_solutions.task5_model_params import (
     FOLDS,
     SET_NAME,
 )
-
-# some notes, use lbfgs?
 
 # Path data
 ########
