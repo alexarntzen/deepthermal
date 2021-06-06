@@ -4,16 +4,19 @@ import numpy as np
 import pandas as pd
 from sklearn import linear_model
 from deepthermal.FFNN_model import init_xavier
-from deepthermal.validation import k_fold_cv_grid, create_subdictionary_iterator
-from deepthermal.plotting import plot_model_scatter, plot_result, plot_compare_scatter
-from deepthermal.multilevel import (
-    fit_multilevel_FFNN,
-    MultilevelFFNN,
-    MultilevelDataset,
-    get_init_multilevel,
-    get_multilevel_RRSE,
+from deepthermal.validation import (
+    k_fold_cv_grid,
+    create_subdictionary_iterator,
+    get_scaled_results,
 )
-from task_solutions.task2_model_params import MODEL_PARAMS_cf, TRAINING_PARAMS_cf
+from deepthermal.plotting import plot_model_scatter, plot_result, plot_compare_scatter
+from deepthermal.FFNN_model import FFNN, fit_FFNN  # to bad multilevel vas not used :(
+from task_solutions.task2_model_params import (
+    MODEL_PARAMS_cf,
+    TRAINING_PARAMS_cf,
+    SET_NAME,
+    FOLDS,
+)
 
 # Path data
 ########
@@ -23,16 +26,11 @@ PATH_TRAINING_DATA_401 = "Task2/TrainingData_401.txt"
 PATH_TRAINING_DATA_1601 = "Task2/TrainingData_1601.txt"
 PATH_TESTING_POINTS = "Task2/TestingData.txt"
 PATH_SOBOL_POINTS = "Task2/samples_sobol.txt"
-PATH_SUBMISSION = "alexander_arntzen_yourleginumber/Task2.txt"
+PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task2.txt"
 ########
 
 # Vizualization and validation parameters
-########
-DATA_COLUMN = "cf"
-MODEL_LIST = np.arange(1)
-SET_NAME = f"ML_1_{DATA_COLUMN}"
-FOLDS = 5
-#########
+
 
 model_params = MODEL_PARAMS_cf
 training_params = TRAINING_PARAMS_cf
@@ -41,13 +39,12 @@ model_params_iter = create_subdictionary_iterator(model_params)
 training_params_iter = create_subdictionary_iterator(training_params)
 
 
-# def make_submission(model):
-#     # Data frame with data
-#     df_test = pd.read_csv(PATH_SUBMISSION, dtype=np.float32)
-#     x_test = (x_test_ - X_TRAIN_MEAN) / X_TRAIN_STD
-#     y_pred = model(x_test).detach()
-#     df_test[DATA_COLUMN] = y_pred[:, 0]
-#     df_test.to_csv(PATH_SUBMISSION, index=False)
+def make_submission(model):
+    # Data frame with data
+    y_pred = model(x_test).detach()
+    np.savetxt(PATH_SUBMISSION, y_pred, delimiter=" ")
+
+
 def get_detrasformed(data, sigma, scale_coefs):
     g = (data / scale_coefs - 1) / sigma
     y = (g + 1) / 2
@@ -78,7 +75,7 @@ if __name__ == "__main__":
     x_test = torch.tensor(df_test.values)
     x_sobol = torch.tensor(df_sobol.values)
 
-    # find the parametrization
+    # find the parametrization of the data
     linreg_intercepts = torch.zeros(8)
     linreg_coefs = torch.zeros(8)
     for i in range(8):
@@ -98,55 +95,68 @@ if __name__ == "__main__":
         < 1e-3
     )
 
-    # detransform to sobol scale
+    # transform training data back to sobol scale
     x_train_101 = get_detrasformed(x_train_101_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_401 = get_detrasformed(x_train_401_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_1601 = get_detrasformed(x_train_1601_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
-    assert (
-        torch.max(x_train_1601 - x_train_101[:160]).item() < 1e-10
-    )  # check points in right order
 
-    Y_MEAN = torch.mean(y_train_101_)
-    Y_STD = torch.std(y_train_101_)
+    # check points in right order
+    assert torch.max(torch.abs(x_train_1601 - x_train_101[:160])).item() < 1e-10
+    assert torch.max(torch.abs(x_train_401 - x_train_101[:640])).item() < 1e-10
+    assert torch.max(torch.abs(x_train_101 - x_sobol)).item() < 1e-5
 
+    # since we know that the points are used in order we can
+    # all 3 simmulation levels in one dataset
+    y_train_ = y_train_101_.clone().detach()
+    y_train_[:640] = y_train_401_
+    y_train_[:160] = y_train_1601_
+
+    # standardize data since it looks normal
+    Y_MEAN = torch.mean(y_train_)
+    Y_STD = torch.std(y_train_)
     y_train_101 = (y_train_101_ - Y_MEAN) / Y_STD
     y_train_401 = (y_train_401_ - Y_MEAN) / Y_STD
     y_train_1601 = (y_train_1601_ - Y_MEAN) / Y_STD
+    y_train = (y_train_ - Y_MEAN) / Y_STD
 
-    data_train = TensorDataset(x_train_101, y_train_101)
-    data_ml = MultilevelDataset(x_train_101, (y_train_101, y_train_401, y_train_1601))
+    data_ml = TensorDataset(x_sobol, y_train)
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
     cv_results = k_fold_cv_grid(
-        Model=MultilevelFFNN,
+        Model=FFNN,
         model_param_iter=model_params_iter,
-        fit=fit_multilevel_FFNN,
+        fit=fit_FFNN,
         training_param_iter=training_params_iter,
         data=data_ml,
-        init=get_init_multilevel(init_xavier),
-        partial=True,
+        init=init_xavier,
+        partial=False,
         folds=FOLDS,
         verbose=True,
-        get_error=get_multilevel_RRSE,
     )
+    cv_results_scaled = get_scaled_results(
+        cv_results,
+        y_center=Y_MEAN,
+        y_scale=Y_STD,
+    )
+
     plot_kwargs = {
         "x_test": x_test,
-        "x_train": data_train[:][0],
-        "y_train": data_train[:][1],
+        "x_train": x_sobol,
+        "y_train": y_train_,
     }
 
     plot_result(
         path_figures=PATH_FIGURES,
         plot_name=SET_NAME + "_compare_",
-        **cv_results,
+        **cv_results_scaled,
         plot_function=plot_model_scatter,
         function_kwargs=plot_kwargs,
     )
     plot_result(
         path_figures=PATH_FIGURES,
         plot_name=SET_NAME + "_vis",
-        **cv_results,
+        **cv_results_scaled,
         plot_function=plot_compare_scatter,
         function_kwargs=plot_kwargs,
         history=False,

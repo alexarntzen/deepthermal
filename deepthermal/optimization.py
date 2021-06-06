@@ -6,11 +6,12 @@ import numpy as np
 def argmin(G, y_0, lr=None, epochs=1000, verbose=False, box_constraint=None):
     y_opt = y_0.clone().detach().requires_grad_(True)
 
-    loss_history = []
     if box_constraint is not None:
         if lr is None:
             lr = 0.01
-        optimizer = optim.Adam([y_opt], lr=lr)
+
+        # ADAM can also be used here
+        optimizer = optim.SGD([y_opt], lr=lr)
 
         for _ in range(epochs):
 
@@ -19,7 +20,6 @@ def argmin(G, y_0, lr=None, epochs=1000, verbose=False, box_constraint=None):
                 g_forward = G(y_opt)
                 if verbose:
                     print("loss: ", g_forward.item(), "value :", y_opt)
-                loss_history.append(g_forward.item())
                 g_forward.backward()
                 return g_forward
 

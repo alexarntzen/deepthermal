@@ -4,6 +4,8 @@ from torch.utils.data import Subset, DataLoader
 import itertools
 from sklearn.model_selection import KFold
 
+from deepthermal.FFNN_model import get_scaled_model
+
 
 # Root Relative Squared Error
 def get_RRSE(model, data, type_str="", verbose=False):
@@ -41,6 +43,7 @@ def k_fold_cv_grid(
     fit,
     training_param_iter,
     data,
+    val_data=None,
     folds=5,
     init=None,
     partial=False,
@@ -65,7 +68,10 @@ def k_fold_cv_grid(
             if verbose:
                 print(f"Running model (mod={model_num},k={k_num})")
             data_train_k = Subset(data, train_index)
-            data_val_k = Subset(data, val_index)
+            if val_data is None:
+                data_val_k = Subset(data, val_index)
+            else:
+                data_val_k = Subset(val_data, val_index)
             model = Model(**model_param)
             if init is not None:
                 init(model, **training_param)
@@ -108,3 +114,21 @@ def print_model_errors(rel_val_errors, **kwargs):
     for i, rel_val_error_list in enumerate(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
         print(f"Model {i} Root Relative Squared validation error: {avg_error * 100}%")
+
+
+def get_scaled_results(cv_results, x_center=0, x_scale=1, y_center=0, y_scale=1):
+    cv_results_scaled = cv_results.copy()
+    cv_results_scaled["models"] = []
+    for i in range(len(cv_results["models"])):
+        cv_results_scaled["models"].append([])
+        for j in range(len(cv_results["models"][i])):
+            cv_results_scaled["models"][i].append(
+                get_scaled_model(
+                    cv_results["models"][i][j],
+                    x_center=x_center,
+                    x_scale=x_scale,
+                    y_center=y_center,
+                    y_scale=y_scale,
+                )
+            )
+    return cv_results_scaled

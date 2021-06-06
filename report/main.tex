@@ -69,33 +69,91 @@
 \maketitle
 
 \section*{Task 1}
-% copied from forum do not use in final report! 
-In the fist task, first of all we processed the given dataset by linearly transforming the inputs to the domain $[0,1]^d$ and normalising the output data. Given the small amount of noise, no denoising procedure was used. We chose a feed forward fully connected neural network to approximate the underlying map. The chosen model depends  on several hyperparameters, including number of layers, neurons, activation function, etc. We performed an ensemble training to select the learning rate and the regularization parameters while fixing the remaining ones. Among the hyperparameters configurations, we chose the one resulting in the lowest value of the training error. For each configuration of the hyper parameters we also retrained the model 5 times, with different initialisation of the parameters (He initialisation was used), and picked again the best trained model.
+In this task a noisy dataset was provided. Attempts to denoise the data did not produce a better cross validation error, so no denoising was used. All the data was then normalized by min-max normalization.
 
-% \begin{figure}[ht]
-%   \begin{subfigure}[b]{0.5\textwidth}
-%     \centering
-%     \includegraphics[width=\linewidth]{figures/task1/result_relu_1_tf0_0.pdf}
-%     \caption{Solution for tf0}
-%     \label{solution-error-dirichlet}
-%   \end{subfigure}\qquad
-%   \begin{subfigure}[b]{0.5\textwidth}
-%     \centering
-%     \includegraphics[width=\linewidth]{figures/task1/result_relu_1_ts0_0.pdf}
-%     \caption{Solution for ts0}
-%     \label{solution-error-mixed}
-%   \end{subfigure}
-%   \label{plot-solution-error}
-%   \caption{empty}
-% \end{figure}
+A feed forward fully connected neural network was chosen to approximate the map. Training was then performed to select the optimal hyperparameters using cross validation error as a selection criterion. The final model was trained 10 times, and the lowest validation error was chosen. The resulting approximation is plotted in Figure \ref{fig:task1}
+
+\begin{figure}[b]
+	\begin{subfigure}[b]{0.5\textwidth}
+	  \centering
+	  \includegraphics[width=\linewidth]{figures/task1/final_tf0.pdf}
+	  \caption{$T_f^0$}
+	  \label{fig:task1a}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.5\textwidth}
+	  \centering
+	  \includegraphics[width=\linewidth]{figures/task1/final_ts0.pdf}
+	  \caption{$T_s^0$}
+	  \label{fig:task1b}
+	\end{subfigure}
+	\caption{Training points and approximation made by the model}
+	\label{fig:task1}
+  \end{figure}
 
 \section*{Task 2}
+In this task both the Sobol points and the transformed points were given. By using linear regression, the parameters of the transformation was found. It was then observed that the points used in the finest mesh solutions also existed in the coarser solutions. Thus, it was possible to use the more accurate $CF$ values where they where available. The $CF$ values where then standardized, since they approximated a normal distribution. 
+Training a feed forward fully connected neural network on the aggregated data gave better results than a multilevel\cite{lye2020multilevel} approach. Ensemble training was then performed to select the optimal hyperparameters using cross validation error as a selection criterion. The final model was trained 10 times, and the lowest validation error was chosen. A plot of the predicted $CF$ values can be found in Figure \ref{fig:task2}  
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/task2/final.pdf}
+    \caption{Comparison between the predicted $CF$ values from the training set and the actual $CF$ values in the training set}
+    \label{fig:task2}
+\end{figure}
+
 \section*{Task 3}
+In this task the temperature data was fist normalized using min-max normalization. The temperature data was then structured so that consecutive temperature measurements are given for each starting time index. The training of the models was then done using the start of these sequences as input and the end as labels to approximate. A feed forward fully connected network was first used, but a network with an LSTM layer performed better on both series of temperatures. Ensemble training was then performed to select the optimal hyperparameters among input length, optimizer, learning rate, regularization and neurons. The final model was trained 5 times, and the lowest validation error was chosen. The predictions for each temperature series can be found in Figure \ref{fig:task3}
+\begin{figure}[t]
+  \begin{subfigure}[b]{0.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/task3/final_tf0.pdf}
+    \caption{$T_f^0$}
+    \label{fig:task3a}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/task3/final_ts0.pdf}
+    \caption{$T_s^0$}
+    \label{fig:task3b}
+  \end{subfigure}
+  \caption{Training points and predictions by the model}
+  \label{fig:task3}
+\end{figure}
 
 \section*{Task 4}
-\section*{Task 5}
-Something something\cite{kingma2017adam}
+In this task the training data $S$ where first normalized to the domain $[0,1]^3$, using min-max scaling. Using the normalized data a feed forward neural network $T^L_{\theta}(t, u)$ was then trained to approximate the map $T^L(t, u)$. The model depends on several hyperparameters including layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.
 
+With a model selected, the noisy data $(T_{f,j}^{L,*}, t_j)_{j=1}^{N}$ was used to define the loss function
+\begin{equation}
+	G(u) = \sum_{j=0}^{N}{(T_{f,j}^{L,*} - T_{\theta}(t_j,u))^2}.
+\end{equation}
+The optimization problem was then solved by SGD with projected gradient. The resulting data are visualized in Figure \ref{fig:task4}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/task4/final.pdf}
+    \caption{The figure shows training values colored by $u$ and the predictions made by the chosen model. The noisy measurements are also depicted with a blue line noting the approximated curve $(T,t)$ for the given $u$}
+    \label{fig:task4}
+\end{figure}
+
+\section*{Task 5}
+In this task the control parameters $(v,D)$ in training set $S$ where first normalized to the domain $[0,1]^2$,  with maximum and minimum parameters given as $[2,20]\times[50,400]$. Using the normalized data a feed forward neural network $CF_{\theta}(D, v)$ was then trained to approximate the map $CF(D, v)$. The model depends on several hyperparameters including layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.  The final model was trained 5 times, and the lowest validation error was chosen. 
+
+Once a suitable model was selected the loss function
+\begin{equation}
+	G(D,v) = (CF_{ref}- CF_{\theta}(D,v))^2
+\end{equation}
+was minimized using SGD with projected gradient 1000 starting points as in the DNNopt\cite{Lye_2021} procedure. The starting points where chosen as the elements in a Sobol sequence in $\R^2$ . The optimization algorithm chosen was SGD with projected gradient. To speed up the optimization, loss was summed over all points, which enabled optimization of all the points simultaneously. The final model was trained 5 times, and the lowest validation error was chosen. The curve of optimal points can be viewed in Figure \ref{fig:task5}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/task5/final_optim_points.pdf}
+    \caption{Optimal curve of $(D^*,v^*)$ values. The initial Sobol points are also shown with the corresponding $G$ value}
+    \label{fig:task5}
+\end{figure}
+
+\section*{Appendix}
+The code for this project can be found at \url{https://github.com/alexarntzen/deepthermal}
+
+\FloatBarrier
 \printbibliography
 \end{document}
 
