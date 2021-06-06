@@ -19,8 +19,6 @@ from task_solutions.task4_model_params import (
 )
 from deepthermal.optimization import argmin
 
-# some notes, use lbfgs?
-
 # Path data
 ########
 PATH_FIGURES = "figures/task4"
@@ -28,7 +26,6 @@ PATH_TRAINING_DATA = "Task4/TrainingData.txt"
 PATH_MEASURED_DATA = "Task4/MeasuredData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task4.txt"
 ########
-
 
 model_params = MODEL_PARAMS_T
 training_params = TRAINING_PARAMS_T
@@ -71,7 +68,7 @@ def plot_task4(
         check_v_pred[:, 0],
         lw=2,
         color="blue",
-        label=f"pred (v={v_guess})",
+        label=f"pred (u={v_guess})",
     )
     legend = ax.legend(loc="upper left")
 
@@ -82,7 +79,7 @@ def plot_task4(
         label=data_train[:, 1],
         marker=".",
     )
-    ax.legend(*scatter.legend_elements(), loc="lower right", title="v")
+    ax.legend(*scatter.legend_elements(), loc="lower right", title="u")
     ax.add_artist(legend)
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
@@ -156,8 +153,8 @@ if __name__ == "__main__":
         y_scale=Y_SCALE,
     )
 
-    # chose models and scale them
-    model = cv_results["models"][0][4]
+    # chose models that fits best
+    model = cv_results["models"][0][3]
 
     # optimization on the normalized problem
     t_tensor = data_measured[:, 0:1]

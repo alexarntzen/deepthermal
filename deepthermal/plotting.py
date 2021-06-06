@@ -4,6 +4,7 @@ import torch
 
 from deepthermal.validation import print_model_errors
 
+
 def get_disc_str(model):
     params = {
         "activation": model.activation,

@@ -1,4 +1,4 @@
-SET_NAME = "final_1"
+SET_NAME = "final"
 FOLDS = 5
 
 MODEL_PARAMS_T = {

@@ -12,8 +12,13 @@ from deepthermal.validation import (
     create_subdictionary_iterator,
 )
 from deepthermal.plotting import plot_result, plot_model_scatter
-from task_solutions.task5_model_params import MODEL_PARAMS_CF, TRAINING_PARAMS_CF
 from deepthermal.optimization import argmin
+from task_solutions.task5_model_params import (
+    MODEL_PARAMS_CF,
+    TRAINING_PARAMS_CF,
+    FOLDS,
+    SET_NAME,
+)
 
 # some notes, use lbfgs?
 
@@ -23,13 +28,6 @@ PATH_FIGURES = "figures/task5"
 PATH_TRAINING_DATA = "Task5/TrainingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task5.txt"
 ########
-
-# Vizualization and validation parameters
-########
-MODEL_LIST = np.arange(1)
-SET_NAME = "final"
-FOLDS = 10
-#########
 
 model_params = MODEL_PARAMS_CF
 training_params = TRAINING_PARAMS_CF
@@ -125,7 +123,6 @@ if __name__ == "__main__":
     }
     plot_result(
         path_figures=PATH_FIGURES,
-        model_list=MODEL_LIST,
         plot_name=SET_NAME,
         **cv_results,
         plot_function=plot_model_scatter,
@@ -134,7 +131,7 @@ if __name__ == "__main__":
 
     # optimization: find the point that optimize G
     # make the G function
-    model_selected = cv_results["models"][0][6]
+    model_selected = cv_results["models"][0][0]
     CF_ref_ = 0.45
     CF_ref = (CF_ref_ - Y_CENTER) / Y_SCALE
     G = get_G(model_selected, CF_ref=CF_ref)

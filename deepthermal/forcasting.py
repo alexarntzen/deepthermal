@@ -67,10 +67,12 @@ def get_structured_prediction(
 
 
 class LSTM(nn.Module):
-    def __init__(self, input_dimension, output_dimension, neurons, num_layers=1):
+    def __init__(
+        self, input_dimension, output_dimension, neurons, num_layers=1, label_width=None
+    ):
         super().__init__()
+        self.label_width = label_width
         self.hidden_layer_size = neurons
-
         self.lstm = nn.LSTM(
             input_dimension, neurons, batch_first=True, num_layers=num_layers
         )
@@ -80,4 +82,7 @@ class LSTM(nn.Module):
     def forward(self, input_seq):
         lstm_out, _ = self.lstm(input_seq)
         predictions = self.linear(lstm_out)
-        return predictions
+        if self.label_width is not None:
+            return predictions[:, -self.label_width :]
+        else:
+            return predictions

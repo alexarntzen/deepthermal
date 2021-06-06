@@ -23,8 +23,6 @@ PATH_FIGURES = "figures/task1"
 PATH_TRAINING_DATA = "Task1/TrainingData.txt"
 PATH_TESTING_POINTS = "Task1/TestingData.txt"
 PATH_SUBMISSION = "alexander_arntzen_yourleginnumber/Task1.txt"
-
-
 ########
 
 

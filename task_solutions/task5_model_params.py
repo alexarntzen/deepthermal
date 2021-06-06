@@ -1,3 +1,6 @@
+SET_NAME = "final"
+FOLDS = 5
+
 MODEL_PARAMS_CF = {
     "input_dimension": [2],
     "output_dimension": [1],

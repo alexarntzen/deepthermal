@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import TensorDataset
 import numpy as np
@@ -14,6 +15,8 @@ from deepthermal.multilevel import (
     fit_multilevel_FFNN,
     MultilevelFFNN,
     MultilevelDataset,
+    FFNN,
+    fit_FFNN,
     get_init_multilevel,
     get_multilevel_RRSE,
 )
@@ -105,33 +108,40 @@ if __name__ == "__main__":
     x_train_101 = get_detrasformed(x_train_101_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_401 = get_detrasformed(x_train_401_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
     x_train_1601 = get_detrasformed(x_train_1601_, sigma=SIGMA, scale_coefs=SCAlE_COEFS)
-    assert (
-        torch.max(x_train_1601 - x_train_101[:160]).item() < 1e-10
-    )  # check points in right order
+
+    # check points in right order
+    assert torch.max(torch.abs(x_train_1601 - x_train_101[:160])).item() < 1e-10
+    assert torch.max(torch.abs(x_train_401 - x_train_101[:640])).item() < 1e-10
+    assert torch.max(torch.abs(x_train_101 - x_sobol)).item() < 1e-5
+
+    # since we know that the points are used in order we can
+    # all 3 simmulation levels in one dataset
+    y_train_ = y_train_101_.clone().detach()
+    y_train_[:640] = y_train_401_
+    y_train_[:160] = y_train_1601_
 
     # standardize data since it looks normal
-    Y_MEAN = torch.mean(y_train_101_)
-    Y_STD = torch.std(y_train_101_)
+    Y_MEAN = torch.mean(y_train_)
+    Y_STD = torch.std(y_train_)
     y_train_101 = (y_train_101_ - Y_MEAN) / Y_STD
     y_train_401 = (y_train_401_ - Y_MEAN) / Y_STD
     y_train_1601 = (y_train_1601_ - Y_MEAN) / Y_STD
+    y_train = (y_train_ - Y_MEAN) / Y_STD
 
-    data_train = TensorDataset(x_train_101, y_train_101)
-    data_ml = MultilevelDataset(x_train_101, (y_train_101, y_train_401, y_train_1601))
+    data_ml = TensorDataset(x_sobol, y_train)
     model_params_iter = create_subdictionary_iterator(model_params)
     training_params_iter = create_subdictionary_iterator(training_params)
 
     cv_results = k_fold_cv_grid(
-        Model=MultilevelFFNN,
+        Model=FFNN,
         model_param_iter=model_params_iter,
-        fit=fit_multilevel_FFNN,
+        fit=fit_FFNN,
         training_param_iter=training_params_iter,
         data=data_ml,
-        init=get_init_multilevel(init_xavier),
+        init=init_xavier,
         partial=False,
         folds=FOLDS,
         verbose=True,
-        get_error=get_multilevel_RRSE,
     )
     cv_results_scaled = get_scaled_results(
         cv_results,
@@ -141,14 +151,14 @@ if __name__ == "__main__":
 
     plot_kwargs = {
         "x_test": x_test,
-        "x_train": x_train_101,
-        "y_train": y_train_101_,
+        "x_train": x_sobol,
+        "y_train": y_train_,
     }
 
     plot_result(
         path_figures=PATH_FIGURES,
         plot_name=SET_NAME + "_compare_",
-        **cv_results,
+        **cv_results_scaled,
         plot_function=plot_model_scatter,
         function_kwargs=plot_kwargs,
     )

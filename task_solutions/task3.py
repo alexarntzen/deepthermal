@@ -34,9 +34,21 @@ model_params_iter = create_subdictionary_iterator(model_params)
 training_params_iter = create_subdictionary_iterator(training_params)
 
 
-def plot_task3(model, t_pred, data_train, t_train, sequence_stride=None, prediction_only=False, **kwargs):
-    t_indices, y_pred = get_structured_prediction(model, data_train, sequence_stride=sequence_stride,
-                                                  prediction_only=prediction_only)
+def plot_task3(
+    model,
+    t_pred,
+    data_train,
+    t_train,
+    sequence_stride=None,
+    prediction_only=False,
+    **kwargs
+):
+    t_indices, y_pred = get_structured_prediction(
+        model,
+        data_train,
+        sequence_stride=sequence_stride,
+        prediction_only=prediction_only,
+    )
     y_train = data_train.data
     x_pred = torch.cat((t_train, t_pred))[t_indices]
     x_train = t_train
@@ -107,7 +119,7 @@ if __name__ == "__main__":
         "t_train": t_train_,
         "x_axis": "t",
         "y_axis": "T",
-        "prediction_only": True,
+        "prediction_only": False,
     }
     plot_result(
         path_figures=PATH_FIGURES,
