@@ -120,7 +120,7 @@ In this task the temperature data was fist normalized using min-max normalizatio
 \end{figure}
 
 \section*{Task 4}
-In this task the training data $S$ where first normalized to the domain $[0,1]^3$, using min-max scaling. Using the normalized data a feed forward neural network $T^L_{\theta}(t, u)$ was then trained to approximate the map $T^L(t, u)$. The model depends on several hyperparameters including: layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.
+In this task the training data $S$ where first normalized to the domain $[0,1]^3$, using min-max scaling. Using the normalized data a feed forward neural network $T^L_{\theta}(t, u)$ was then trained to approximate the map $T^L(t, u)$. The model depends on several hyperparameters including layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.
 
 With a model selected, the noisy data $(T_{f,j}^{L,*}, t_j)_{j=1}^{N}$ was used to define the loss function
 \begin{equation}
@@ -135,7 +135,7 @@ The optimization problem was then solved by SGD with projected gradient. The res
 \end{figure}
 
 \section*{Task 5}
-In this task the control parameters $(v,D)$ in training set $S$ where first normalized to the domain $[0,1]^2$,  with maximum and minimum parameters given as $[2,20]\times[50,400]$. Using the normalized data a feed forward neural network $CF_{\theta}(D, v)$ was then trained to approximate the map $CF(D, v)$. The model depends on several hyperparameters including: layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.  The final model was trained 5 times, and the lowest validation error was chosen. 
+In this task the control parameters $(v,D)$ in training set $S$ where first normalized to the domain $[0,1]^2$,  with maximum and minimum parameters given as $[2,20]\times[50,400]$. Using the normalized data a feed forward neural network $CF_{\theta}(D, v)$ was then trained to approximate the map $CF(D, v)$. The model depends on several hyperparameters including layers, neurons, activation function, optimization algorithm, learning rate, and regularization. The chosen parameters were chosen with ensemble training using cross validation error as a selection criterion.  The final model was trained 5 times, and the lowest validation error was chosen. 
 
 Once a suitable model was selected the loss function
 \begin{equation}

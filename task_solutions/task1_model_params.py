@@ -13,7 +13,7 @@ TRAINING_PARAMS_ts0 = {
     "num_epochs": [10000],
     "batch_size": [265],
     "regularization_exp": [2],
-    "regularization_param": [1e-4],
+    "regularization_param": [1e-5],
     "optimizer": ["ADAM"],
     "learning_rate": [0.005],
 }
