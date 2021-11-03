@@ -1,6 +1,7 @@
 import torch
 import torch.utils
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset, DataLoader, Dataset
+
 import itertools
 from sklearn.model_selection import KFold
 
@@ -42,8 +43,8 @@ def k_fold_cv_grid(
     model_param_iter,
     fit,
     training_param_iter,
-    data,
-    val_data=None,
+    data: Dataset,
+    val_data: Dataset = None,
     folds=5,
     init=None,
     partial=False,
@@ -58,20 +59,28 @@ def k_fold_cv_grid(
     for model_num, (model_param, training_param) in enumerate(
         itertools.product(model_param_iter, training_param_iter)
     ):
-        kf = KFold(n_splits=folds, shuffle=True)
+
+        splits = (
+            KFold(n_splits=folds, shuffle=True).split(data)
+            if folds > 1
+            else ((None, None),)
+        )
+
         rel_train_errors_k = []
         rel_val_errors_k = []
         models_k = []
         loss_history_trains_k = []
         loss_history_vals_k = []
-        for k_num, (train_index, val_index) in enumerate(kf.split(data)):
+        for k_num, (train_index, val_index) in enumerate(splits):
             if verbose:
                 print(f"Running model (mod={model_num},k={k_num})")
-            data_train_k = Subset(data, train_index)
+            data_train_k = data if train_index is None else Subset(data, train_index)
             if val_data is None:
-                data_val_k = Subset(data, val_index)
+                data_val_k = data if train_index is None else Subset(data, val_index)
             else:
-                data_val_k = Subset(val_data, val_index)
+                data_val_k = (
+                    val_data if train_index is None else Subset(val_data, val_index)
+                )
             model = Model(**model_param)
             if init is not None:
                 init(model, **training_param)
@@ -84,7 +93,6 @@ def k_fold_cv_grid(
             loss_history_vals_k.append(loss_history_val)
             rel_train_errors_k.append(get_error(model, data_train_k))
             rel_val_errors_k.append(get_error(model, data_val_k))
-
             if partial:
                 break
 

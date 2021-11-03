@@ -8,7 +8,12 @@ import numpy as np
 
 larning_rates = {"ADAM": 0.001, "LBFGS": 0.1}
 
-activations = {"relu": nn.ReLU(), "sigmoid": nn.Sigmoid(), "tanh": nn.Tanh()}
+activations = {
+    "LeakyReLU": nn.LeakyReLU,
+    "relu": nn.ReLU(),
+    "sigmoid": nn.Sigmoid(),
+    "tanh": nn.Tanh(),
+}
 
 
 class FFNN(nn.Module):
@@ -86,19 +91,26 @@ def regularization(model, p):
     return reg_loss
 
 
+def compute_loss_torch(loss_func, model, y_train, x_train):
+    y_pred = model(x_train)
+    loss = loss_func(y_pred, y_train)
+    return loss
+
+
 def fit_FFNN(
     model,
     data,
     num_epochs,
     batch_size,
     optimizer,
-    p=2,
     regularization_param=0,
     regularization_exp=2,
     data_val=None,
     track_history=True,
     verbose=False,
     learning_rate=None,
+    loss_func=nn.MSELoss(),
+    compute_loss: callable = compute_loss_torch,
     **kwargs
 ):
     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
@@ -136,8 +148,9 @@ def fit_FFNN(
                 # zero the parameter gradients
                 optimizer_.zero_grad()
                 # forward + backward + optimize
-                y_pred_ = model(x_train_)
-                loss_u = torch.mean((y_pred_ - y_train_) ** p)
+                loss_u = compute_loss(
+                    loss_func=loss_func, model=model, x_train=x_train_, y_train=y_train_
+                )
                 loss_reg = regularization(model, regularization_exp)
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward()
@@ -155,8 +168,9 @@ def fit_FFNN(
             )
         # record validation loss for history
         if data_val is not None and track_history:
-            y_val_pred_ = model(x_val)
-            validation_loss = torch.mean((y_val_pred_ - y_val) ** p).item()
+            validation_loss = compute_loss(
+                loss_func=loss_func, model=model, x_train=x_val, y_train=y_val
+            ).detach()
             loss_history_val[epoch] = validation_loss
 
         if verbose and track_history:
