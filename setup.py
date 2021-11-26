@@ -2,11 +2,11 @@ from setuptools import setup
 
 setup(
     name="deepthermal",
-    version="1.0",
-    packages=["test", "deepthermal", "task_solutions"],
-    url="",
+    version="1.1",
+    packages=["deepthermal"],
+    url="https://github.com/alexarntzen/deepthermal.git",
     license="MIT",
     author="Alexander Johan Arntzen",
-    author_email="alexander.arntzen@gmail.com",
+    author_email="hello@alexarntzen.com",
     description="Project using deep learning to model thermal storage for solar panels",
 )
