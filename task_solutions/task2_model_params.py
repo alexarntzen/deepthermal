@@ -1,6 +1,9 @@
+from deepthermal.FFNN_model import FFNN, init_xavier
+
 SET_NAME = "final_collected_100_"
 FOLDS = 10
 MODEL_PARAMS_cf = {
+    "model": [FFNN],
     "input_dimension": [8],
     "output_dimension": [1],
     "n_hidden_layers": [7],
@@ -14,4 +17,5 @@ TRAINING_PARAMS_cf = {
     "regularization_param": [1e-4],
     "optimizer": ["ADAM"],
     "learning_rate": [0.005],
+    "init": [init_xavier],
 }

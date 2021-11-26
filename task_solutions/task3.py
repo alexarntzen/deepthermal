@@ -18,7 +18,7 @@ from task_solutions.task3_model_params import (
     SET_NAME,
     DATA_COLUMN,
 )
-from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction, LSTM
+from deepthermal.forcasting import TimeSeriesDataset, get_structured_prediction
 
 # Path data
 ########
@@ -95,12 +95,10 @@ if __name__ == "__main__":
 
     # do training with cross validation
     cv_results = k_fold_cv_grid(
-        Model=LSTM,
-        model_param_iter=model_params_iter,
+        model_params=model_params_iter,
         fit=fit_FFNN,
-        training_param_iter=training_params_iter,
+        training_params=training_params_iter,
         data=data,
-        init=None,
         partial=False,
         folds=FOLDS,
         verbose=True,

@@ -35,6 +35,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         print("\n\n Approximating the sine function:")
 
         model_params = {
+            "model": FFNN,
             "input_dimension": 1,
             "output_dimension": 1,
             "n_hidden_layers": 5,
@@ -48,6 +49,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "regularization_param": 1e-6,
             "optimizer": "ADAM",
             "learning_rate": 0.01,
+            "init": init_xavier,
             "init_weight_seed": 20,
         }
 
@@ -62,6 +64,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
         print("\n\n Approximating the sine function with cross validation grid:")
 
         model_params = {
+            "model": [FFNN],
             "input_dimension": [1],
             "output_dimension": [1],
             "n_hidden_layers": [5],
@@ -78,18 +81,17 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "optimizer": ["ADAM"],
             "learning_rate": [0.01],
             "init_weight_seed": [15],
+            "init": [init_xavier],
         }
 
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
         cv_results = k_fold_cv_grid(
-            FFNN,
             model_params_iterator,
-            fit_FFNN,
             training_params_iterator,
             data=self.data,
-            init=init_xavier,
+            fit=fit_FFNN,
             folds=3,
         )
         avg_rel_val_errors = torch.mean(
@@ -107,6 +109,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "\n\n Approximating the sine function with partial cross validation grid:"
         )
         model_params = {
+            "model": [FFNN],
             "input_dimension": [1],
             "output_dimension": [1],
             "n_hidden_layers": [5],
@@ -121,18 +124,17 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "optimizer": ["ADAM"],
             "learning_rate": [0.02],
             "init_weight_seed": [25],
+            "init": [init_xavier],
         }
 
         model_params_iterator = create_subdictionary_iterator(model_params)
         training_params_iterator = create_subdictionary_iterator(training_params)
 
         cv_results = k_fold_cv_grid(
-            FFNN,
-            model_params_iterator,
-            fit_FFNN,
-            training_params_iterator,
+            model_params=model_params_iterator,
+            fit=fit_FFNN,
+            training_params=training_params_iterator,
             data=self.data,
-            init=init_xavier,
             folds=5,
             partial=True,
         )

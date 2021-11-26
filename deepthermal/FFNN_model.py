@@ -81,6 +81,7 @@ def init_xavier(model, init_weight_seed=None, **kwargs):
             m.bias.data.fill_(0)
 
     model.apply(init_weights)
+    return model
 
 
 def regularization(model, p):
@@ -98,21 +99,26 @@ def compute_loss_torch(loss_func, model, y_train, x_train):
 
 
 def fit_FFNN(
-    model,
+    model: callable,
     data,
     num_epochs,
     batch_size,
     optimizer,
+    init: callable = None,
     regularization_param=0,
     regularization_exp=2,
     data_val=None,
     track_history=True,
     verbose=False,
     learning_rate=None,
+    init_weight_seed: int = None,
     loss_func=nn.MSELoss(),
     compute_loss: callable = compute_loss_torch,
     **kwargs
-):
+) -> tuple[callable, torch.Tensor, torch.Tensor]:
+    if init is not None:
+        init(model, init_weight_seed=init_weight_seed)
+
     training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
@@ -127,6 +133,15 @@ def fit_FFNN(
             max_eval=50000,
             tolerance_change=1.0 * np.finfo(float).eps,
         )
+    elif optimizer == "strong_wolfe":
+        optimizer_ = optim.LBFGS(
+            model.parameters(),
+            lr=learning_rate,
+            max_iter=50000,
+            max_eval=50000,
+            history_size=100,
+            line_search_fn="strong_wolfe",
+        )
     else:
         raise ValueError("Optimizer not recognized")
 
@@ -134,7 +149,7 @@ def fit_FFNN(
     loss_history_val = torch.zeros((num_epochs))
     # Loop over epochs
     for epoch in range(num_epochs):
-        if verbose:
+        if verbose and not epoch % 100:
             print(
                 "################################ ",
                 epoch,
@@ -153,7 +168,7 @@ def fit_FFNN(
                 )
                 loss_reg = regularization(model, regularization_exp)
                 loss = loss_u + regularization_param * loss_reg
-                loss.backward()
+                loss.backward(retain_graph=True)
 
                 # Compute average training loss over batches for the current epoch
                 if track_history:
@@ -173,17 +188,17 @@ def fit_FFNN(
             ).detach()
             loss_history_val[epoch] = validation_loss
 
-        if verbose and track_history:
-            print("Training Loss: ", np.round(loss_history_train[-1], 8))
+        if verbose and not epoch % 100 and track_history:
+            print("Training Loss: ", np.round(loss_history_train[epoch].item(), 8))
             if data_val is not None:
-                print("Validation Loss: ", np.round(validation_loss, 8))
+                print("Validation Loss: ", np.round(validation_loss.item(), 8))
 
     if verbose and track_history:
-        print("Final Training Loss: ", np.round(loss_history_train[-1], 8))
+        print("Final Training Loss: ", np.round(loss_history_train[-1].item(), 8))
         if data_val is not None:
-            print("Final Validation Loss: ", np.round(loss_history_val[-1], 8))
+            print("Final Validation Loss: ", np.round(loss_history_val[-1].item(), 8))
 
-    return loss_history_train, loss_history_val
+    return model, loss_history_train, loss_history_val
 
 
 def get_trained_model(
@@ -191,19 +206,18 @@ def get_trained_model(
     training_param,
     data,
     data_val=None,
-    Model=FFNN,
     fit=fit_FFNN,
-    init=init_xavier,
 ):
-    nn_model = Model(**model_param)
     # Xavier weight initialization
-    if init is not None:
-        init(nn_model, **training_param)
-
-    loss_history_train, loss_history_val = fit(
-        nn_model, data, data_val=data_val, **training_param
+    model = model_param.pop("model")(**model_param)
+    model, loss_history_train, loss_history_val = fit(
+        model=model,
+        data=data,
+        data_val=data_val,
+        **training_param,
+        model_param=model_param,
     )
-    return nn_model, loss_history_train, loss_history_val
+    return model, loss_history_train, loss_history_val
 
 
 def get_scaled_model(model, x_center=0, x_scale=1, y_center=0, y_scale=1):

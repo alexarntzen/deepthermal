@@ -5,7 +5,7 @@ from torch.utils.data import Subset, DataLoader, Dataset
 import itertools
 from sklearn.model_selection import KFold
 
-from deepthermal.FFNN_model import get_scaled_model
+from deepthermal.FFNN_model import get_scaled_model, fit_FFNN
 
 
 # Root Relative Squared Error
@@ -39,25 +39,35 @@ def get_NRMSE(model, data, type_str="", verbose=False):
 
 
 def k_fold_cv_grid(
-    Model,
-    model_param_iter,
-    fit,
-    training_param_iter,
+    model_params,
+    training_params,
     data: Dataset,
     val_data: Dataset = None,
+    fit: callable = fit_FFNN,
     folds=5,
-    init=None,
     partial=False,
     verbose=False,
     get_error=get_RRSE,
 ):
+    # transform a dictionary with a list of inputs
+    # into an iterator over the coproduct of the lists
+    if isinstance(model_params, dict):
+        model_params_iter = create_subdictionary_iterator(model_params)
+    else:
+        model_params_iter = model_params
+
+    if isinstance(training_params, dict):
+        training_params_iter = create_subdictionary_iterator(training_params)
+    else:
+        training_params_iter = training_params
+
     models = []
     loss_history_trains = []
     loss_history_vals = []
     rel_train_errors = []
     rel_val_errors = []
     for model_num, (model_param, training_param) in enumerate(
-        itertools.product(model_param_iter, training_param_iter)
+        itertools.product(model_params_iter, training_params_iter)
     ):
 
         splits = (
@@ -68,7 +78,7 @@ def k_fold_cv_grid(
 
         rel_train_errors_k = []
         rel_val_errors_k = []
-        models_k = []
+        models_instance_k = []
         loss_history_trains_k = []
         loss_history_vals_k = []
         for k_num, (train_index, val_index) in enumerate(splits):
@@ -81,22 +91,28 @@ def k_fold_cv_grid(
                 data_val_k = (
                     val_data if train_index is None else Subset(val_data, val_index)
                 )
-            model = Model(**model_param)
-            if init is not None:
-                init(model, **training_param)
-            loss_history_train, loss_history_val = fit(
-                model, **training_param, data=data_train_k, data_val=data_val_k
+
+            # train model on data!
+
+            model_param_k = model_param.copy()
+            model_instance = model_param_k.pop("model")(**model_param_k)
+            model_instance, loss_history_train, loss_history_val = fit(
+                model=model_instance,
+                **training_param,
+                data=data_train_k,
+                data_val=data_val_k,
+                verbose=verbose,
             )
 
-            models_k.append(model)
+            models_instance_k.append(model_instance)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            rel_train_errors_k.append(get_error(model, data_train_k))
-            rel_val_errors_k.append(get_error(model, data_val_k))
+            rel_train_errors_k.append(get_error(model_instance, data_train_k))
+            rel_val_errors_k.append(get_error(model_instance, data_val_k))
             if partial:
                 break
 
-        models.append(models_k)
+        models.append(models_instance_k)
         loss_history_trains.append(loss_history_trains_k)
         loss_history_vals.append(loss_history_vals_k)
         rel_train_errors.append(rel_train_errors_k)
@@ -121,7 +137,7 @@ def create_subdictionary_iterator(dictionary):
 def print_model_errors(rel_val_errors, **kwargs):
     for i, rel_val_error_list in enumerate(rel_val_errors):
         avg_error = sum(rel_val_error_list) / len(rel_val_error_list)
-        print(f"Model {i} Root Relative Squared validation error: {avg_error * 100}%")
+        print(f"Model {i} average error: {avg_error}")
 
 
 def get_scaled_results(cv_results, x_center=0, x_scale=1, y_center=0, y_scale=1):

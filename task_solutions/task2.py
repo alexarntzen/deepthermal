@@ -3,14 +3,13 @@ from torch.utils.data import TensorDataset
 import numpy as np
 import pandas as pd
 from sklearn import linear_model
-from deepthermal.FFNN_model import init_xavier
 from deepthermal.validation import (
     k_fold_cv_grid,
     create_subdictionary_iterator,
     get_scaled_results,
 )
 from deepthermal.plotting import plot_model_scatter, plot_result, plot_compare_scatter
-from deepthermal.FFNN_model import FFNN, fit_FFNN  # to bad multilevel vas not used :(
+from deepthermal.FFNN_model import fit_FFNN  # to bad multilevel vas not used :(
 from task_solutions.task2_model_params import (
     MODEL_PARAMS_cf,
     TRAINING_PARAMS_cf,
@@ -124,12 +123,10 @@ if __name__ == "__main__":
     training_params_iter = create_subdictionary_iterator(training_params)
 
     cv_results = k_fold_cv_grid(
-        Model=FFNN,
-        model_param_iter=model_params_iter,
+        model_params=model_params_iter,
         fit=fit_FFNN,
-        training_param_iter=training_params_iter,
+        training_params=training_params_iter,
         data=data_ml,
-        init=init_xavier,
         partial=False,
         folds=FOLDS,
         verbose=True,

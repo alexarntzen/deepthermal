@@ -7,7 +7,6 @@ from deepthermal.multilevel import (
     get_level_dataset,
     fit_multilevel_FFNN,
     MultilevelFFNN,
-    get_init_multilevel,
     get_multilevel_RRSE,
 )
 from deepthermal.FFNN_model import get_trained_model, init_xavier
@@ -65,6 +64,7 @@ class TestMultilevel(unittest.TestCase):
         print("\n\n Approximating the sine function with a multilevel model:")
         ml_dataset = MultilevelDataset(self.x, self.datalist)
         model_params = {
+            "model": MultilevelFFNN,
             "input_dimension": 1,
             "output_dimension": 1,
             "n_hidden_layers": 5,
@@ -80,14 +80,13 @@ class TestMultilevel(unittest.TestCase):
             "optimizer": "ADAM",
             "learning_rate": 0.01,
             "init_weight_seed": 20,
+            "init": init_xavier,
         }
         model, loss_history_train, loss_history_val = get_trained_model(
-            model_params,
-            training_params,
+            model_param=model_params,
+            training_param=training_params,
             data=ml_dataset,
             fit=fit_multilevel_FFNN,
-            Model=MultilevelFFNN,
-            init=get_init_multilevel(init_xavier),
         )
 
         rel_test_error = get_multilevel_RRSE(model, ml_dataset)

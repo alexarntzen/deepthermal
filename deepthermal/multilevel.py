@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-
 from deepthermal.FFNN_model import fit_FFNN, init_xavier, FFNN
 
 
@@ -67,18 +66,32 @@ def get_level_dataset(x_tensor, y_tensors, level):
         return x_tensor[level_indices], diff
 
 
-def fit_multilevel_FFNN(Models, data, data_val=None, num_epochs=100, **training_param):
-    levels = len(Models)
+def fit_multilevel_FFNN(
+    model: MultilevelFFNN,
+    data: MultilevelDataset,
+    data_val=None,
+    num_epochs=100,
+    **training_param,
+):
+    # We get each level of the multilevel FNN
+    # and train it on each level of the multilevel dataset
+    levels = len(model)
     loss_history_train_levels = torch.zeros((levels, num_epochs))
     loss_history_val_levels = torch.zeros((levels, num_epochs))
-    for level in range(len(Models)):
+
+    for level in range(len(model)):
         level_data = TensorDataset(*get_level_dataset(*data[:], level))
         if data_val is not None:
             level_data_val = TensorDataset(*get_level_dataset(*data_val[:], level))
         else:
             level_data_val = None
-        loss_history_train_levels[level], loss_history_val_levels[level] = fit_FFNN(
-            model=Models[level],
+
+        (
+            level_model,
+            loss_history_train_levels[level],
+            loss_history_val_levels[level],
+        ) = fit_FFNN(
+            model=model[level],
             data=level_data,
             data_val=level_data_val,
             num_epochs=num_epochs,
@@ -88,10 +101,10 @@ def fit_multilevel_FFNN(Models, data, data_val=None, num_epochs=100, **training_
     # return the sum of the losses since it is not relative loss
     loss_history_train = torch.sum(loss_history_train_levels, dim=0)
     loss_history_val = torch.sum(loss_history_val_levels, dim=0)
+    return model, loss_history_train, loss_history_val
 
-    return loss_history_train, loss_history_val
 
-
+# only used when initialized before training
 def get_init_multilevel(init=init_xavier):
     def init_multilevel(Models, **kwargs):
         for level in range(len(Models)):

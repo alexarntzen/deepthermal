@@ -1,3 +1,5 @@
+from deepthermal.forcasting import LSTM
+
 ########
 DATA_COLUMN = "ts0"
 SET_NAME = f"final_{DATA_COLUMN}"
@@ -8,6 +10,7 @@ FOLDS = 5
 INPUT_WIDTH = 37
 LABEL_WIDTH = 34
 MODEL_PARAMS_tf0 = {
+    "model": [LSTM],
     "input_dimension": [1],
     "output_dimension": [1],
     "neurons": [25],
@@ -23,6 +26,7 @@ TRAINING_PARAMS_tf0 = {
     "learning_rate": [0.01],
 }
 MODEL_PARAMS_ts0 = {
+    "model": [LSTM],
     "input_dimension": [1],
     "output_dimension": [1],
     "neurons": [20],

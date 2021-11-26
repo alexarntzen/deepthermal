@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from deepthermal.FFNN_model import FFNN, fit_FFNN, init_xavier
+from deepthermal.FFNN_model import fit_FFNN
 from deepthermal.validation import (
     k_fold_cv_grid,
     get_scaled_results,
@@ -135,12 +135,10 @@ if __name__ == "__main__":
 
     # train model
     cv_results = k_fold_cv_grid(
-        Model=FFNN,
-        model_param_iter=model_params_iter,
+        model_params=model_params_iter,
         fit=fit_FFNN,
-        training_param_iter=training_params_iter,
+        training_params=training_params_iter,
         data=data_train,
-        init=init_xavier,
         partial=False,
         folds=FOLDS,
         verbose=True,
