@@ -170,19 +170,21 @@ def fit_FFNN(
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward(retain_graph=True)
 
-                # Compute average training loss over batches for the current epoch
-                if track_history:
-                    loss_history_train[epoch] += loss.item() / len(training_set)
                 return loss
 
             optimizer_.step(closure=closure)
 
-        if data_val is not None:
+            # Compute average training loss over batches for the current epoch
+            if track_history:
+                loss_train = compute_loss(
+                    loss_func=loss_func, model=model, x_train=x_train_, y_train=y_train_
+                )
+                loss_history_train[epoch] += loss_train.item() / len(training_set)
+
+        if data_val is not None and track_history:
             x_val, y_val = next(
                 iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
             )
-        # record validation loss for history
-        if data_val is not None and track_history:
             validation_loss = compute_loss(
                 loss_func=loss_func, model=model, x_train=x_val, y_train=y_val
             ).detach()

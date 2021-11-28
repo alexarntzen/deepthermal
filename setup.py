@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="deepthermal",
-    version="1.1",
+    version="1.2",
     packages=["deepthermal"],
     url="https://github.com/alexarntzen/deepthermal.git",
     license="MIT",
