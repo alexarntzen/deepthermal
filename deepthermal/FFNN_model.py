@@ -18,13 +18,13 @@ activations = {
 
 class FFNN(nn.Module):
     def __init__(
-        self,
-        input_dimension,
-        output_dimension,
-        n_hidden_layers,
-        neurons,
-        activation="relu",
-        **kwargs
+            self,
+            input_dimension,
+            output_dimension,
+            n_hidden_layers,
+            neurons,
+            activation="relu",
+            **kwargs
     ):
         super(FFNN, self).__init__()
 
@@ -99,22 +99,24 @@ def compute_loss_torch(loss_func, model, y_train, x_train):
 
 
 def fit_FFNN(
-    model: callable,
-    data,
-    num_epochs,
-    batch_size,
-    optimizer,
-    init: callable = None,
-    regularization_param=0,
-    regularization_exp=2,
-    data_val=None,
-    track_history=True,
-    verbose=False,
-    learning_rate=None,
-    init_weight_seed: int = None,
-    loss_func=nn.MSELoss(),
-    compute_loss: callable = compute_loss_torch,
-    **kwargs
+        model: callable,
+        data,
+        num_epochs,
+        batch_size,
+        optimizer,
+        init: callable = None,
+        regularization_param=0,
+        regularization_exp=2,
+        data_val=None,
+        track_history=True,
+        verbose=False,
+        learning_rate=None,
+        init_weight_seed: int = None,
+        lr_scheduler=None,
+        loss_func=nn.MSELoss(),
+        compute_loss: callable = compute_loss_torch,
+        max_nan_steps=50,
+        **kwargs
 ) -> tuple[callable, torch.Tensor, torch.Tensor]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
@@ -125,13 +127,15 @@ def fit_FFNN(
     # select optimizer
     if optimizer == "ADAM":
         optimizer_ = optim.Adam(model.parameters(), lr=learning_rate)
+    elif optimizer == "SGD":
+        optimizer_ = optim.SGD(model.parameters(), lr=learning_rate)
     elif optimizer == "LBFGS":
         optimizer_ = optim.LBFGS(
             model.parameters(),
-            lr=learning_rate,
             max_iter=1,
             max_eval=50000,
             tolerance_change=1.0 * np.finfo(float).eps,
+            lr=learning_rate,
         )
     elif optimizer == "strong_wolfe":
         optimizer_ = optim.LBFGS(
@@ -145,8 +149,14 @@ def fit_FFNN(
     else:
         raise ValueError("Optimizer not recognized")
 
+    # Learning Rate Scheduler
+
+    if lr_scheduler is not None:
+        scheduler = lr_scheduler(optimizer_)
+
     loss_history_train = torch.zeros((num_epochs))
     loss_history_val = torch.zeros((num_epochs))
+    nan_steps = 0
     # Loop over epochs
     for epoch in range(num_epochs):
         if verbose and not epoch % 100:
@@ -180,6 +190,11 @@ def fit_FFNN(
                     loss_func=loss_func, model=model, x_train=x_train_, y_train=y_train_
                 )
                 loss_history_train[epoch] += loss_train.item() / len(training_set)
+                if torch.isnan(loss_train):
+                    nan_steps += 1
+                if epoch % 100 == 0:
+                    nan_steps = 0
+
 
         if data_val is not None and track_history:
             x_val, y_val = next(
@@ -190,10 +205,16 @@ def fit_FFNN(
             ).detach()
             loss_history_val[epoch] = validation_loss
 
+            if lr_scheduler is not None:
+                scheduler.step(validation_loss)
+
         if verbose and not epoch % 100 and track_history:
             print("Training Loss: ", np.round(loss_history_train[epoch].item(), 8))
             if data_val is not None:
                 print("Validation Loss: ", np.round(validation_loss.item(), 8))
+
+        if nan_steps > max_nan_steps:
+            break
 
     if verbose and track_history:
         print("Final Training Loss: ", np.round(loss_history_train[-1].item(), 8))
@@ -204,11 +225,11 @@ def fit_FFNN(
 
 
 def get_trained_model(
-    model_param,
-    training_param,
-    data,
-    data_val=None,
-    fit=fit_FFNN,
+        model_param,
+        training_param,
+        data,
+        data_val=None,
+        fit=fit_FFNN,
 ):
     # Xavier weight initialization
     model = model_param.pop("model")(**model_param)

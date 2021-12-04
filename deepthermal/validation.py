@@ -45,9 +45,10 @@ def k_fold_cv_grid(
     val_data: Dataset = None,
     fit: callable = fit_FFNN,
     folds=5,
+    trials=1,
     partial=False,
     verbose=False,
-    get_error=get_RRSE,
+    get_error=None,
 ):
     # transform a dictionary with a list of inputs
     # into an iterator over the coproduct of the lists
@@ -66,8 +67,10 @@ def k_fold_cv_grid(
     loss_history_vals = []
     rel_train_errors = []
     rel_val_errors = []
-    for model_num, (model_param, training_param) in enumerate(
-        itertools.product(model_params_iter, training_params_iter)
+    for model_num, (trial, (model_param, training_param)) in enumerate(
+        itertools.product(
+            range(trials), itertools.product(model_params_iter, training_params_iter)
+        )
     ):
 
         splits = (
@@ -83,7 +86,7 @@ def k_fold_cv_grid(
         loss_history_vals_k = []
         for k_num, (train_index, val_index) in enumerate(splits):
             if verbose:
-                print(f"Running model (mod={model_num},k={k_num})")
+                print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
             data_train_k = data if train_index is None else Subset(data, train_index)
             if val_data is None:
                 data_val_k = data if train_index is None else Subset(data, val_index)
@@ -107,16 +110,18 @@ def k_fold_cv_grid(
             models_instance_k.append(model_instance)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            rel_train_errors_k.append(get_error(model_instance, data_train_k))
-            rel_val_errors_k.append(get_error(model_instance, data_val_k))
+            if get_error is callable:
+                rel_train_errors_k.append(get_error(model_instance, data_train_k))
+                rel_val_errors_k.append(get_error(model_instance, data_val_k))
             if partial:
                 break
 
         models.append(models_instance_k)
         loss_history_trains.append(loss_history_trains_k)
         loss_history_vals.append(loss_history_vals_k)
-        rel_train_errors.append(rel_train_errors_k)
-        rel_val_errors.append(rel_val_errors_k)
+        if len(rel_train_errors_k) > 0:
+            rel_train_errors.append(rel_train_errors_k)
+            rel_val_errors.append(rel_val_errors_k)
 
     k_fold_grid = {
         "models": models,
@@ -128,9 +133,22 @@ def k_fold_cv_grid(
     return k_fold_grid
 
 
-def create_subdictionary_iterator(dictionary):
-    for sublist in itertools.product(*dictionary.values()):
+def create_subdictionary_iterator(dictionary: dict, product=True) -> iter:
+    """Create an iterator over a dictionary of lists
+    Important: all lists in the dict must be of the same lenght if zip is chosen
+    Cartesian product is default
+    """
+    combine = itertools.product if product else zip
+    for sublist in combine(*dictionary.values()):
+        # convert two list into dictionary
         yield dict(zip(dictionary.keys(), sublist))
+
+
+def add_dictionary_iterators(new_dict_iter: iter, dict_iterator: iter, product=True):
+    """Combine two subdictionary iterators"""
+    combine = itertools.product if product else zip
+    for left, right in combine(new_dict_iter, dict_iterator):
+        yield right | left
 
 
 # printing model errors

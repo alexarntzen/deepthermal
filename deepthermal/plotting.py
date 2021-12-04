@@ -132,9 +132,9 @@ def plot_result(
     models,
     loss_history_trains,
     loss_history_vals,
-    rel_val_errors,
-    path_figures,
-    plot_name,
+    path_figures="",
+    plot_name="plot",
+    rel_val_errors=None,
     plot_function=None,
     function_kwargs=None,
     model_list=None,
@@ -143,7 +143,8 @@ def plot_result(
 ):
     if model_list is None:
         model_list = np.arange(len(models))
-    print_model_errors(rel_val_errors)
+    if rel_val_errors is not None:
+        print_model_errors(rel_val_errors)
     for i in model_list:
         if history:
             plot_model_history(
