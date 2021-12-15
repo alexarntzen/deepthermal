@@ -32,7 +32,6 @@ def plot_model_history(
             loss_history_trains[i],
             label="Training error history",
         )
-        print(loss_history_vals[i])
         if loss_history_vals[i] is not None and len(loss_history_vals[i]) > 0:
             axis[i].loglog(
                 torch.arange(1, len(loss_history_vals[i]) + 1),
