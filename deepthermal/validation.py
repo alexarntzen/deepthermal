@@ -76,7 +76,7 @@ def k_fold_cv_grid(
         splits = (
             KFold(n_splits=folds, shuffle=True).split(data)
             if folds > 1
-            else ((None, None),)
+            else ((None, []),)  # ((full set, empty set),)
         )
 
         rel_train_errors_k = []
@@ -87,16 +87,15 @@ def k_fold_cv_grid(
         for k_num, (train_index, val_index) in enumerate(splits):
             if verbose:
                 print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
+                print(f"Parameters: {model_param, training_param}")
             data_train_k = data if train_index is None else Subset(data, train_index)
+
+            # if no validaton data do k_fold splits
             if val_data is None:
-                data_val_k = data if train_index is None else Subset(data, val_index)
+                data_val_k = data if val_index is None else Subset(data, val_index)
             else:
-                data_val_k = (
-                    val_data if train_index is None else Subset(val_data, val_index)
-                )
-
+                data_val_k = val_data
             # train model on data!
-
             model_param_k = model_param.copy()
             model_instance = model_param_k.pop("model")(**model_param_k)
             model_instance, loss_history_train, loss_history_val = fit(
@@ -110,7 +109,7 @@ def k_fold_cv_grid(
             models_instance_k.append(model_instance)
             loss_history_trains_k.append(loss_history_train)
             loss_history_vals_k.append(loss_history_val)
-            if get_error is callable:
+            if callable(get_error):
                 rel_train_errors_k.append(get_error(model_instance, data_train_k))
                 rel_val_errors_k.append(get_error(model_instance, data_val_k))
             if partial:

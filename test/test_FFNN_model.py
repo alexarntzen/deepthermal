@@ -19,17 +19,16 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
     def exact_solution(x):
         return torch.sin(x)
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         n_samples = 1000
         sigma = 0.0
 
-        cls.x = 2 * np.pi * torch.rand((n_samples, 1))
-        cls.y = cls.exact_solution(cls.x) * (1 + sigma * torch.randn(cls.x.shape))
-        cls.x_test = torch.linspace(0, 2 * np.pi, 10000).reshape(-1, 1)
-        cls.y_test = cls.exact_solution(cls.x_test)
-        cls.data = torch.utils.data.TensorDataset(cls.x, cls.y)
-        cls.data_test = torch.utils.data.TensorDataset(cls.x_test, cls.y_test)
+        self.x = 2 * np.pi * torch.rand((n_samples, 1))
+        self.y = self.exact_solution(self.x) * (1 + sigma * torch.randn(self.x.shape))
+        self.x_test = torch.linspace(0, 2 * np.pi, 10000).reshape(-1, 1)
+        self.y_test = self.exact_solution(self.x_test)
+        self.data = torch.utils.data.TensorDataset(self.x, self.y)
+        self.data_test = torch.utils.data.TensorDataset(self.x_test, self.y_test)
 
     def test_approx_error(self):
         print("\n\n Approximating the sine function:")
@@ -92,6 +91,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             training_params_iterator,
             data=self.data,
             fit=fit_FFNN,
+            get_error=get_RRSE,
             folds=3,
         )
         avg_rel_val_errors = torch.mean(
@@ -137,6 +137,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             data=self.data,
             folds=5,
             partial=True,
+            get_error=get_RRSE,
         )
 
         avg_rel_val_errors = torch.mean(

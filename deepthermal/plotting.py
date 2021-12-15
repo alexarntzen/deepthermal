@@ -32,13 +32,14 @@ def plot_model_history(
             loss_history_trains[i],
             label="Training error history",
         )
-        if len(loss_history_vals[i]) is not None:
+        print(loss_history_vals[i])
+        if loss_history_vals[i] is not None and len(loss_history_vals[i]) > 0:
             axis[i].loglog(
                 torch.arange(1, len(loss_history_vals[i]) + 1),
                 loss_history_vals[i],
                 label="Validation error history",
             )
-        axis[i].set_xlabel("Epoch")
+        axis[i].set_xlabel("Iteration")
         axis[i].set_ylabel("Loss")
         axis[i].legend()
     histfig.savefig(f"{path_figures}/history_{plot_name}.pdf")

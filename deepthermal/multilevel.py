@@ -79,7 +79,7 @@ def fit_multilevel_FFNN(
     loss_history_train_levels = torch.zeros((levels, num_epochs))
     loss_history_val_levels = torch.zeros((levels, num_epochs))
 
-    for level in range(len(model)):
+    for level in range(levels):
         level_data = TensorDataset(*get_level_dataset(*data[:], level))
         if data_val is not None:
             level_data_val = TensorDataset(*get_level_dataset(*data_val[:], level))
@@ -95,9 +95,12 @@ def fit_multilevel_FFNN(
             data=level_data,
             data_val=level_data_val,
             num_epochs=num_epochs,
+            track_epoch=True,
             **training_param,
         )
 
+    loss_history_train_levels = torch.as_tensor(loss_history_train_levels)
+    loss_history_val_levels = torch.as_tensor(loss_history_val_levels)
     # return the sum of the losses since it is not relative loss
     loss_history_train = torch.sum(loss_history_train_levels, dim=0)
     loss_history_val = torch.sum(loss_history_val_levels, dim=0)

@@ -18,13 +18,13 @@ activations = {
 
 class FFNN(nn.Module):
     def __init__(
-            self,
-            input_dimension,
-            output_dimension,
-            n_hidden_layers,
-            neurons,
-            activation="relu",
-            **kwargs
+        self,
+        input_dimension,
+        output_dimension,
+        n_hidden_layers,
+        neurons,
+        activation="relu",
+        **kwargs
     ):
         super(FFNN, self).__init__()
 
@@ -99,24 +99,25 @@ def compute_loss_torch(loss_func, model, y_train, x_train):
 
 
 def fit_FFNN(
-        model: callable,
-        data,
-        num_epochs,
-        batch_size,
-        optimizer,
-        init: callable = None,
-        regularization_param=0,
-        regularization_exp=2,
-        data_val=None,
-        track_history=True,
-        verbose=False,
-        learning_rate=None,
-        init_weight_seed: int = None,
-        lr_scheduler=None,
-        loss_func=nn.MSELoss(),
-        compute_loss: callable = compute_loss_torch,
-        max_nan_steps=50,
-        **kwargs
+    model: callable,
+    data,
+    num_epochs,
+    batch_size,
+    optimizer,
+    init: callable = None,
+    regularization_param=0,
+    regularization_exp=2,
+    data_val=None,
+    track_history=True,
+    track_epoch=False,
+    verbose=False,
+    learning_rate=None,
+    init_weight_seed: int = None,
+    lr_scheduler=None,
+    loss_func=nn.MSELoss(),
+    compute_loss: callable = compute_loss_torch,
+    max_nan_steps=50,
+    **kwargs
 ) -> tuple[callable, torch.Tensor, torch.Tensor]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
@@ -154,8 +155,13 @@ def fit_FFNN(
     if lr_scheduler is not None:
         scheduler = lr_scheduler(optimizer_)
 
-    loss_history_train = torch.zeros((num_epochs))
-    loss_history_val = torch.zeros((num_epochs))
+    if track_epoch:
+        loss_history_train = torch.zeros(num_epochs)
+        loss_history_val = torch.zeros(num_epochs)
+    elif track_history:
+        loss_history_train = list()
+        loss_history_val = list()
+
     nan_steps = 0
     # Loop over epochs
     for epoch in range(num_epochs):
@@ -180,56 +186,98 @@ def fit_FFNN(
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward(retain_graph=True)
 
+                # assumes that the expected loss is
+                # not proportional to the lenght of training data
+                if track_history and not track_epoch:
+                    # track training loss
+                    x_train, y_train = data[None]
+                    train_loss = (
+                        compute_loss(
+                            loss_func=loss_func,
+                            model=model,
+                            x_train=x_train,
+                            y_train=y_train,
+                        )
+                        .detach()
+                        .item()
+                    )
+                    loss_history_train.append(train_loss)
+
+                    # track validatoin loss
+                    if data_val is not None and len(data_val) > 0 and track_history:
+                        x_val, y_val = data_val[None]
+                        validation_loss = (
+                            compute_loss(
+                                loss_func=loss_func,
+                                model=model,
+                                x_train=x_val,
+                                y_train=y_val,
+                            )
+                            .detach()
+                            .item()
+                        )
+                        loss_history_val.append(validation_loss)
+
                 return loss
 
             optimizer_.step(closure=closure)
 
-            # Compute average training loss over batches for the current epoch
-            if track_history:
-                loss_train = compute_loss(
-                    loss_func=loss_func, model=model, x_train=x_train_, y_train=y_train_
-                )
-                loss_history_train[epoch] += loss_train.item() / len(training_set)
-                if torch.isnan(loss_train):
-                    nan_steps += 1
-                if epoch % 100 == 0:
-                    nan_steps = 0
+            # stop if nan output
+            if track_epoch or track_history or lr_scheduler:
+                x_train, y_train = data[None]
+                train_loss = compute_loss(
+                    loss_func=loss_func,
+                    model=model,
+                    x_train=x_train,
+                    y_train=y_train,
+                ).detach()
+                if track_history:
+                    if torch.isnan(train_loss):
+                        nan_steps += 1
+                    if epoch % 100 == 0:
+                        nan_steps = 0
 
+                if lr_scheduler is not None:
+                    scheduler.step(train_loss)
 
-        if data_val is not None and track_history:
-            x_val, y_val = next(
-                iter(DataLoader(data_val, batch_size=len(data_val), shuffle=False))
-            )
-            validation_loss = compute_loss(
-                loss_func=loss_func, model=model, x_train=x_val, y_train=y_val
-            ).detach()
-            loss_history_val[epoch] = validation_loss
-
-            if lr_scheduler is not None:
-                scheduler.step(validation_loss)
+                if track_epoch:
+                    loss_history_train[epoch] = train_loss.item()
+                    if data_val is not None and len(data_val) > 0:
+                        x_val, y_val = data_val[None]
+                        validation_loss = (
+                            compute_loss(
+                                loss_func=loss_func,
+                                model=model,
+                                x_train=x_val,
+                                y_train=y_val,
+                            )
+                            .detach()
+                            .item()
+                        )
+                        loss_history_val = validation_loss.item
 
         if verbose and not epoch % 100 and track_history:
-            print("Training Loss: ", np.round(loss_history_train[epoch].item(), 8))
-            if data_val is not None:
-                print("Validation Loss: ", np.round(validation_loss.item(), 8))
+            print("Training Loss: ", np.round(loss_history_train[-1], 8))
+            if data_val is not None and len(data_val) > 0:
+                print("Validation Loss: ", np.round(loss_history_val[-1], 8))
 
         if nan_steps > max_nan_steps:
             break
 
     if verbose and track_history:
-        print("Final Training Loss: ", np.round(loss_history_train[-1].item(), 8))
-        if data_val is not None:
-            print("Final Validation Loss: ", np.round(loss_history_val[-1].item(), 8))
+        print("Final training Loss: ", np.round(loss_history_train[-1], 8))
+        if data_val is not None and len(data_val) > 0:
+            print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
-    return model, loss_history_train, loss_history_val
+    return model, torch.as_tensor(loss_history_train), torch.as_tensor(loss_history_val)
 
 
 def get_trained_model(
-        model_param,
-        training_param,
-        data,
-        data_val=None,
-        fit=fit_FFNN,
+    model_param,
+    training_param,
+    data,
+    data_val=None,
+    fit=fit_FFNN,
 ):
     # Xavier weight initialization
     model = model_param.pop("model")(**model_param)

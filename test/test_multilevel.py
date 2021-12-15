@@ -13,19 +13,18 @@ from deepthermal.FFNN_model import get_trained_model, init_xavier
 
 
 class TestMultilevel(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.n_samples = 2000
-        cls.x = 2 * np.pi * torch.rand((cls.n_samples, 1))
-        cls.y_0 = torch.sin(cls.x)
-        cls.y_1 = cls.y_0[: cls.n_samples // 2]
-        cls.y_2 = cls.y_0[: cls.n_samples // 4]
-        cls.datalist = [
-            cls.y_0.detach().clone(),
-            cls.y_1.detach().clone(),
-            cls.y_2.detach().clone(),
+    def setUp(self):
+        self.n_samples = 2000
+        self.x = 2 * np.pi * torch.rand((self.n_samples, 1))
+        self.y_0 = torch.sin(self.x)
+        self.y_1 = self.y_0[: self.n_samples // 2]
+        self.y_2 = self.y_0[: self.n_samples // 4]
+        self.datalist = [
+            self.y_0.detach().clone(),
+            self.y_1.detach().clone(),
+            self.y_2.detach().clone(),
         ]
-        cls.len_list = [cls.n_samples, cls.n_samples // 2, cls.n_samples // 4]
+        self.len_list = [self.n_samples, self.n_samples // 2, self.n_samples // 4]
 
     def test_dataset_params(self):
         print(
