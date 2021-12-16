@@ -16,6 +16,21 @@ activations = {
 }
 
 
+def init_xavier(model, init_weight_seed=None, **kwargs):
+    if init_weight_seed is not None:
+        torch.manual_seed(init_weight_seed)
+
+    def init_weights(m):
+        if type(m) == nn.Linear and m.weight.requires_grad and m.bias.requires_grad:
+            g = nn.init.calculate_gain(model.activation)
+            # torch.nn.init.xavier_uniform_(m.weight, gain=g)
+            torch.nn.init.xavier_normal_(m.weight, gain=g)
+            m.bias.data.fill_(0)
+
+    model.apply(init_weights)
+    return model
+
+
 class FFNN(nn.Module):
     def __init__(
         self,
@@ -24,6 +39,7 @@ class FFNN(nn.Module):
         n_hidden_layers,
         neurons,
         activation="relu",
+        init=None,
         **kwargs
     ):
         super(FFNN, self).__init__()
@@ -47,6 +63,10 @@ class FFNN(nn.Module):
         )
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
+        # init
+        if init is not None:
+            init(self)
+
     def forward(self, x):
         # The forward function performs the set of affine and
         # non-linear transformations defining the network
@@ -55,6 +75,9 @@ class FFNN(nn.Module):
         for k, l in enumerate(self.hidden_layers):
             x = self.activation_(l(x))
         return self.output_layer(x)
+
+    def __str__(self):
+        return "FFNN"
 
 
 def NeuralNet_Seq(input_dimension, output_dimension, n_hidden_layers, neurons):
@@ -66,21 +89,6 @@ def NeuralNet_Seq(input_dimension, output_dimension, n_hidden_layers, neurons):
         modules.append(nn.Tanh())
     modules.append(nn.Linear(neurons, output_dimension))
     model = nn.Sequential(*modules)
-    return model
-
-
-def init_xavier(model, init_weight_seed=None, **kwargs):
-    if init_weight_seed is not None:
-        torch.manual_seed(init_weight_seed)
-
-    def init_weights(m):
-        if type(m) == nn.Linear and m.weight.requires_grad and m.bias.requires_grad:
-            g = nn.init.calculate_gain(model.activation)
-            # torch.nn.init.xavier_uniform_(m.weight, gain=g)
-            torch.nn.init.xavier_normal_(m.weight, gain=g)
-            m.bias.data.fill_(0)
-
-    model.apply(init_weights)
     return model
 
 
@@ -111,6 +119,7 @@ def fit_FFNN(
     track_history=True,
     track_epoch=False,
     verbose=False,
+    verbose_interval=100,
     learning_rate=None,
     init_weight_seed: int = None,
     lr_scheduler=None,
@@ -122,7 +131,7 @@ def fit_FFNN(
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
 
-    training_set = DataLoader(data, batch_size=batch_size, shuffle=True)
+    training_set = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=True)
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
     # select optimizer
@@ -142,11 +151,12 @@ def fit_FFNN(
         optimizer_ = optim.LBFGS(
             model.parameters(),
             lr=learning_rate,
-            max_iter=50000,
+            max_iter=5000,
             max_eval=50000,
             history_size=100,
             line_search_fn="strong_wolfe",
         )
+        verbose_interval = 1
     else:
         raise ValueError("Optimizer not recognized")
 
@@ -155,12 +165,11 @@ def fit_FFNN(
     if lr_scheduler is not None:
         scheduler = lr_scheduler(optimizer_)
 
+    loss_history_train = list()
+    loss_history_val = list()
     if track_epoch:
         loss_history_train = torch.zeros(num_epochs)
         loss_history_val = torch.zeros(num_epochs)
-    elif track_history:
-        loss_history_train = list()
-        loss_history_val = list()
 
     nan_steps = 0
     # Loop over epochs
@@ -190,7 +199,7 @@ def fit_FFNN(
                 # not proportional to the lenght of training data
                 if track_history and not track_epoch:
                     # track training loss
-                    x_train, y_train = data[None]
+                    x_train, y_train = data[:]
                     train_loss = (
                         compute_loss(
                             loss_func=loss_func,
@@ -222,41 +231,41 @@ def fit_FFNN(
 
             optimizer_.step(closure=closure)
 
-            # stop if nan output
-            if track_epoch or track_history or lr_scheduler:
-                x_train, y_train = data[None]
-                train_loss = compute_loss(
-                    loss_func=loss_func,
-                    model=model,
-                    x_train=x_train,
-                    y_train=y_train,
-                ).detach()
-                if track_history:
-                    if torch.isnan(train_loss):
-                        nan_steps += 1
-                    if epoch % 100 == 0:
-                        nan_steps = 0
+        if track_epoch or track_history or lr_scheduler:
+            x_train, y_train = data[None]
+            train_loss = compute_loss(
+                loss_func=loss_func,
+                model=model,
+                x_train=x_train,
+                y_train=y_train,
+            ).detach()
+            if track_history:
+                # stop if nan output
+                if torch.isnan(train_loss):
+                    nan_steps += 1
+                if epoch % 100 == 0:
+                    nan_steps = 0
 
-                if lr_scheduler is not None:
-                    scheduler.step(train_loss)
+            if lr_scheduler is not None:
+                scheduler.step(train_loss)
 
-                if track_epoch:
-                    loss_history_train[epoch] = train_loss.item()
-                    if data_val is not None and len(data_val) > 0:
-                        x_val, y_val = data_val[None]
-                        validation_loss = (
-                            compute_loss(
-                                loss_func=loss_func,
-                                model=model,
-                                x_train=x_val,
-                                y_train=y_val,
-                            )
-                            .detach()
-                            .item()
+            if track_epoch:
+                loss_history_train[epoch] = train_loss.item()
+                if data_val is not None and len(data_val) > 0:
+                    x_val, y_val = data_val[None]
+                    validation_loss = (
+                        compute_loss(
+                            loss_func=loss_func,
+                            model=model,
+                            x_train=x_val,
+                            y_train=y_val,
                         )
-                        loss_history_val = validation_loss.item
+                        .detach()
+                        .item()
+                    )
+                    loss_history_val = validation_loss.item
 
-        if verbose and not epoch % 100 and track_history:
+        if verbose and not epoch % verbose_interval and track_history:
             print("Training Loss: ", np.round(loss_history_train[-1], 8))
             if data_val is not None and len(data_val) > 0:
                 print("Validation Loss: ", np.round(loss_history_val[-1], 8))
@@ -264,7 +273,7 @@ def fit_FFNN(
         if nan_steps > max_nan_steps:
             break
 
-    if verbose and track_history:
+    if verbose and track_history and len(loss_history_train) > 0:
         print("Final training Loss: ", np.round(loss_history_train[-1], 8))
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))

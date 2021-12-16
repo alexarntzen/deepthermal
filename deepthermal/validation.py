@@ -76,7 +76,7 @@ def k_fold_cv_grid(
         splits = (
             KFold(n_splits=folds, shuffle=True).split(data)
             if folds > 1
-            else ((None, []),)  # ((full set, empty set),)
+            else ((torch.arange(len(data)), []),)  # ((full set, empty set),)
         )
 
         rel_train_errors_k = []
@@ -88,11 +88,11 @@ def k_fold_cv_grid(
             if verbose:
                 print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
                 print(f"Parameters: {model_param, training_param}")
-            data_train_k = data if train_index is None else Subset(data, train_index)
+            data_train_k = Subset(data, train_index)
 
             # if no validaton data do k_fold splits
             if val_data is None:
-                data_val_k = data if val_index is None else Subset(data, val_index)
+                data_val_k = Subset(data, val_index)
             else:
                 data_val_k = val_data
             # train model on data!
