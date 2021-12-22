@@ -26,7 +26,6 @@ def plot_model_history(
     if k == 1:
         axis = [axis]
     for i, model in enumerate(models):
-        axis[i].grid(True, which="both", ls=":")
         axis[i].loglog(
             torch.arange(1, len(loss_history_trains[i]) + 1),
             loss_history_trains[i],
@@ -38,7 +37,7 @@ def plot_model_history(
                 loss_history_vals[i],
                 label="Validation error history",
             )
-        axis[i].set_xlabel("Iteration")
+        axis[i].set_xlabel("Iterations")
         axis[i].set_ylabel("Loss")
         axis[i].legend()
     histfig.savefig(f"{path_figures}/history_{plot_name}.pdf")
@@ -51,18 +50,19 @@ def plot_result_sorted(
     y_pred=None,
     x_train=None,
     y_train=None,
-    plot_name="vis_model",
+    plot_name="",
     x_axis="",
     y_axis="",
     path_figures="../figures",
+    compare_label="data",
 ):
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.set_xlabel(x_axis)
     ax.set_ylabel(y_axis)
     if x_train is not None and y_train is not None:
-        ax.plot(x_train, y_train, ".:", label="training data", lw=2, mew=1)
+        ax.plot(x_train, y_train, ".:", label=compare_label, lw=2, mew=1)
     if x_pred is not None and y_pred is not None:
-        ax.plot(x_pred, y_pred, "-", label="prediction", lw=2)
+        ax.plot(x_pred, y_pred, "-", label="Prediction", lw=2)
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)

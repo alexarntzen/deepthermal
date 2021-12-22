@@ -196,7 +196,7 @@ def fit_FFNN(
                 loss.backward(retain_graph=True)
 
                 # assumes that the expected loss is
-                # not proportional to the lenght of training data
+                # not proportional to the length of training data
                 if track_history and not track_epoch:
                     # track training loss
                     x_train, y_train = data[:]
