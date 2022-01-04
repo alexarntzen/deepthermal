@@ -156,6 +156,7 @@ def fit_FFNN(
             history_size=100,
             line_search_fn="strong_wolfe",
         )
+        max_nan_steps = 2
         verbose_interval = 1
     else:
         raise ValueError("Optimizer not recognized")
