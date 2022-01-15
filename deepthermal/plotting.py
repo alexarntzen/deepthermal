@@ -22,7 +22,7 @@ def plot_model_history(
     path_figures="figures",
 ):
     k = len(models)
-    histfig, axis = plt.subplots(1, k, figsize=(8 * k, 6))
+    histfig, axis = plt.subplots(1, k, tight_layout=True)
     if k == 1:
         axis = [axis]
     for i, model in enumerate(models):
@@ -56,7 +56,7 @@ def plot_result_sorted(
     path_figures="../figures",
     compare_label="data",
 ):
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(tight_layout=True)
     ax.set_xlabel(x_axis)
     ax.set_ylabel(y_axis)
     if x_train is not None and y_train is not None:
@@ -106,7 +106,7 @@ def plot_model_scatter(
 def plot_compare_scatter(
     model, x_train, y_train, plot_name="vis_model", path_figures="../figures", **kwargs
 ):
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(tight_layout=True)
     ax.set_xlabel("Actual data")
     ax.set_ylabel("Predicted data")
     for i in range(y_train.size(-1)):

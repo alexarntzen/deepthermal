@@ -6,7 +6,7 @@ import numpy as np
 
 # GLOBAL VARIABLES
 
-larning_rates = {"ADAM": 0.001, "LBFGS": 0.1}
+larning_rates = {"ADAM": 0.001, "LBFGS": 0.1, "strong_wolfe": 1}
 
 activations = {
     "LeakyReLU": nn.LeakyReLU,
@@ -59,7 +59,7 @@ class FFNN(nn.Module):
 
         self.input_layer = nn.Linear(self.input_dimension, self.neurons)
         self.hidden_layers = nn.ModuleList(
-            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)]
+            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers - 1)]
         )
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
@@ -123,6 +123,7 @@ def fit_FFNN(
     learning_rate=None,
     init_weight_seed: int = None,
     lr_scheduler=None,
+    stop_stochastic: int = None,
     loss_func=nn.MSELoss(),
     compute_loss: callable = compute_loss_torch,
     max_nan_steps=50,
@@ -131,7 +132,6 @@ def fit_FFNN(
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
 
-    training_set = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=True)
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
     # select optimizer
@@ -151,13 +151,13 @@ def fit_FFNN(
         optimizer_ = optim.LBFGS(
             model.parameters(),
             lr=learning_rate,
-            max_iter=5000,
-            max_eval=50000,
-            history_size=100,
+            max_iter=100,
+            max_eval=1000,
+            history_size=200,
             line_search_fn="strong_wolfe",
         )
         max_nan_steps = 2
-        verbose_interval = 1
+        verbose_interval = 1 if num_epochs < 10 else 5
     else:
         raise ValueError("Optimizer not recognized")
 
@@ -166,22 +166,26 @@ def fit_FFNN(
     if lr_scheduler is not None:
         scheduler = lr_scheduler(optimizer_)
 
+    training_set = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=True)
+
     loss_history_train = list()
     loss_history_val = list()
     if track_epoch:
-        loss_history_train = torch.zeros(num_epochs)
-        loss_history_val = torch.zeros(num_epochs)
+        loss_history_train = np.zeros(num_epochs)
+        loss_history_val = np.zeros(num_epochs)
 
     nan_steps = 0
     # Loop over epochs
     for epoch in range(num_epochs):
-        if verbose and not epoch % 100:
+        if verbose and not epoch % verbose_interval:
             print(
                 "################################ ",
                 epoch,
                 " ################################",
             )
-
+        if stop_stochastic is not None and stop_stochastic == epoch:
+            training_set = (data[:],)
+            # print((training_set, ))
         # Loop over batches
         for j, (x_train_, y_train_) in enumerate(training_set):
 
@@ -215,7 +219,7 @@ def fit_FFNN(
 
                     # track validatoin loss
                     if data_val is not None and len(data_val) > 0 and track_history:
-                        x_val, y_val = data_val[None]
+                        x_val, y_val = data_val[:]
                         validation_loss = (
                             compute_loss(
                                 loss_func=loss_func,
@@ -233,7 +237,7 @@ def fit_FFNN(
             optimizer_.step(closure=closure)
 
         if track_epoch or track_history or lr_scheduler:
-            x_train, y_train = data[None]
+            x_train, y_train = data[:]
             train_loss = compute_loss(
                 loss_func=loss_func,
                 model=model,
@@ -253,7 +257,7 @@ def fit_FFNN(
             if track_epoch:
                 loss_history_train[epoch] = train_loss.item()
                 if data_val is not None and len(data_val) > 0:
-                    x_val, y_val = data_val[None]
+                    x_val, y_val = data_val[:]
                     validation_loss = (
                         compute_loss(
                             loss_func=loss_func,
@@ -264,12 +268,13 @@ def fit_FFNN(
                         .detach()
                         .item()
                     )
-                    loss_history_val = validation_loss.item
-
+                    loss_history_val[epoch] = validation_loss.item()
+        print_iter = epoch
         if verbose and not epoch % verbose_interval and track_history:
-            print("Training Loss: ", np.round(loss_history_train[-1], 8))
+            print_iter = epoch if track_epoch else -1
+            print("Training Loss: ", np.round(loss_history_train[print_iter], 8))
             if data_val is not None and len(data_val) > 0:
-                print("Validation Loss: ", np.round(loss_history_val[-1], 8))
+                print("Validation Loss: ", np.round(loss_history_val[print_iter], 8))
 
         if nan_steps > max_nan_steps:
             break
