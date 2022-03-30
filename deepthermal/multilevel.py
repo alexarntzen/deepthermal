@@ -128,7 +128,7 @@ def get_multilevel_RRSE(model, data, type_str="", verbose=False, level=0):
     relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum(
         (y_data_mean - y_data) ** 2
     )
-    relative_error = relative_error_2 ** 0.5
+    relative_error = relative_error_2**0.5
     if verbose:
         print(
             f"Root Relative Squared {type_str} Error: ",

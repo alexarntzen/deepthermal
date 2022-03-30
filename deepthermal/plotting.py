@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 import torch
 
@@ -55,8 +56,13 @@ def plot_result_sorted(
     y_axis="",
     path_figures="../figures",
     compare_label="data",
-):
-    fig, ax = plt.subplots(tight_layout=True)
+    fig: Figure = None,
+) -> Figure:
+    if Figure is None:
+        fig, ax = plt.subplots(tight_layout=True)
+    else:
+        ax = fig.get_axes()[0]
+
     ax.set_xlabel(x_axis)
     ax.set_ylabel(y_axis)
     if x_train is not None and y_train is not None:
@@ -66,6 +72,7 @@ def plot_result_sorted(
     ax.legend()
     fig.savefig(f"{path_figures}/{plot_name}.pdf")
     plt.close(fig)
+    return fig
 
 
 # plot predicted data on

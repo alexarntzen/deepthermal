@@ -17,7 +17,7 @@ def get_RRSE(model, data, type_str="", verbose=False):
     relative_error_2 = torch.sum((y_pred - y_data) ** 2) / torch.sum(
         (y_data_mean - y_data) ** 2
     )
-    relative_error = relative_error_2 ** 0.5
+    relative_error = relative_error_2**0.5
     if verbose:
         print(
             f"Root Relative Squared {type_str} Error: ",
