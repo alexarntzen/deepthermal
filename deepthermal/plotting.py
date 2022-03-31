@@ -22,18 +22,30 @@ def plot_model_history(
     plot_name="Loss history",
     path_figures="figures",
 ):
+
+    if len(loss_history_trains) == 0:
+        warnings.warn("No loss history to plot")
+        return
+
     k = len(models)
     histfig, axis = plt.subplots(1, k, tight_layout=True)
     if k == 1:
         axis = [axis]
     for i, model in enumerate(models):
-        axis[i].loglog(
+        if np.any(loss_history_trains[i] < 0) or (
+            loss_history_vals is not None and np.any(loss_history_vals[i] < 0)
+        ):
+            plot_func = axis[i].plot
+        else:
+            plot_func = axis[i].loglog
+
+        plot_func(
             torch.arange(1, len(loss_history_trains[i]) + 1),
             loss_history_trains[i],
             label="Training error history",
         )
-        if loss_history_vals[i] is not None and len(loss_history_vals[i]) > 0:
-            axis[i].loglog(
+        if loss_history_vals is not None and len(loss_history_vals[i]) > 0:
+            plot_func(
                 torch.arange(1, len(loss_history_vals[i]) + 1),
                 loss_history_vals[i],
                 label="Validation error history",
