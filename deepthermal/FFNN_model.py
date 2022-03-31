@@ -267,7 +267,7 @@ def fit_FFNN(
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
-    return model, torch.as_tensor(loss_history_train), torch.as_tensor(loss_history_val)
+    return model, np.array(loss_history_train), np.array(loss_history_val)
 
 
 def get_trained_model(
