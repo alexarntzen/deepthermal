@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
+from tqdm import tqdm
 from typing import Union, List
 
 # GLOBAL VARIABLES
@@ -127,18 +128,17 @@ def fit_FFNN(
     regularization_exp=2,
     data_val=None,
     track_history=True,
-    track_epoch=False,
+    track_epoch=True,
     verbose=False,
     verbose_interval=100,
     learning_rate=None,
     init_weight_seed: int = None,
     lr_scheduler=None,
-    stop_stochastic: int = None,
     loss_func=nn.MSELoss(),
     compute_loss: callable = compute_loss_torch,
     max_nan_steps=50,
     **kwargs,
-) -> tuple[callable, torch.Tensor, torch.Tensor]:
+) -> tuple[callable, np.array, np.array]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
 
@@ -176,8 +176,6 @@ def fit_FFNN(
     if lr_scheduler is not None:
         scheduler = lr_scheduler(optimizer_)
 
-    training_set = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=True)
-
     loss_history_train = list()
     loss_history_val = list()
     if track_epoch:
@@ -186,14 +184,12 @@ def fit_FFNN(
 
     nan_steps = 0
     # Loop over epochs
-    for epoch in range(num_epochs):
-        if verbose and not epoch % verbose_interval:
-            print(
-                "################################ ",
-                epoch,
-                " ################################",
-            )
-        # Loop over batches
+    for epoch in tqdm(
+        range(num_epochs), desc="Epoch: ", disable=(not verbose), leave=False
+    ):
+        training_set = DataLoader(
+            data, batch_size=batch_size, shuffle=True, drop_last=True
+        )
         for j, data_sample in enumerate(training_set):
 
             def closure():
@@ -251,7 +247,7 @@ def fit_FFNN(
                         data=data_val,
                         loss_func=loss_func,
                     ).item()
-                    loss_history_val[epoch] = validation_loss.item()
+                    loss_history_val[epoch] = validation_loss
         print_iter = epoch
         if verbose and not epoch % verbose_interval and track_history:
             print_iter = epoch if track_epoch else -1

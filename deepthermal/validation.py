@@ -42,6 +42,7 @@ def k_fold_cv_grid(
     model_params,
     training_params,
     data: Dataset,
+    shuffle_folds: bool = True,
     val_data: Dataset = None,
     fit: callable = fit_FFNN,
     folds=5,
@@ -74,7 +75,7 @@ def k_fold_cv_grid(
     ):
 
         splits = (
-            KFold(n_splits=folds, shuffle=True).split(data)
+            KFold(n_splits=folds, shuffle=shuffle_folds).split(data)
             if folds > 1
             else ((torch.arange(len(data)), []),)  # ((full set, empty set),)
         )
@@ -88,13 +89,14 @@ def k_fold_cv_grid(
             if verbose:
                 print(f"\nRunning model (trial={trial}, mod={model_num}, k={k_num}):")
                 print(f"Parameters: {model_param, training_param}")
-            data_train_k = Subset(data, train_index)
 
             # if no validaton data do k_fold splits
             if val_data is None:
                 data_val_k = Subset(data, val_index)
+                data_train_k = Subset(data, train_index)
             else:
                 data_val_k = val_data
+                data_train_k = data
             # train model on data!
             model_param_k = model_param.copy()
             model_instance = model_param_k.pop("model")(**model_param_k)

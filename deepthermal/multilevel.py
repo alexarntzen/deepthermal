@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from deepthermal.FFNN_model import fit_FFNN, init_xavier, FFNN
@@ -76,8 +77,8 @@ def fit_multilevel_FFNN(
     # We get each level of the multilevel FNN
     # and train it on each level of the multilevel dataset
     levels = len(model)
-    loss_history_train_levels = torch.zeros((levels, num_epochs))
-    loss_history_val_levels = torch.zeros((levels, num_epochs))
+    loss_history_train_levels = np.zeros((levels, num_epochs))
+    loss_history_val_levels = np.zeros((levels, num_epochs))
 
     for level in range(levels):
         level_data = TensorDataset(*get_level_dataset(*data[:], level))

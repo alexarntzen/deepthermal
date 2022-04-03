@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import torch
-
+import warnings
 from deepthermal.validation import print_model_errors
 
 
@@ -35,7 +35,7 @@ def plot_model_history(
         if np.any(loss_history_trains[i] < 0) or (
             loss_history_vals is not None and np.any(loss_history_vals[i] < 0)
         ):
-            plot_func = axis[i].plot
+            plot_func = axis[i].semilogx
         else:
             plot_func = axis[i].loglog
 
