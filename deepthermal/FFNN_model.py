@@ -137,6 +137,7 @@ def fit_FFNN(
     loss_func=nn.MSELoss(),
     compute_loss: callable = compute_loss_torch,
     max_nan_steps=50,
+    post_step: callable = None,
     **kwargs,
 ) -> tuple[callable, np.array, np.array]:
     if init is not None:
@@ -205,25 +206,29 @@ def fit_FFNN(
                 loss = loss_u + regularization_param * loss_reg
                 loss.backward(retain_graph=True)
 
-                # assumes that the expected loss is
-                # not proportional to the length of training data
-                if track_history and not track_epoch:
-                    # track training loss
-                    train_loss = compute_loss(
-                        model=model, data=data, loss_func=loss_func
-                    ).item()
-                    loss_history_train.append(train_loss)
-
-                    # track validatoin loss
-                    if data_val is not None and len(data_val) > 0 and track_history:
-                        validation_loss = compute_loss(
-                            model=model, data=data_val, loss_func=loss_func
-                        ).item()
-                        loss_history_val.append(validation_loss)
-
                 return loss
 
             optimizer_.step(closure=closure)
+
+            if post_step is not None:
+                post_step(model=model, data=data)
+
+            # track after each step if not track epoch
+            # assumes that the expected loss is
+            # not proportional to the length of training data
+            if track_history and not track_epoch:
+                # track training loss
+                train_loss = compute_loss(
+                    model=model, data=data, loss_func=loss_func
+                ).item()
+                loss_history_train.append(train_loss)
+
+                # track validatoin loss
+                if data_val is not None and len(data_val) > 0 and track_history:
+                    validation_loss = compute_loss(
+                        model=model, data=data_val, loss_func=loss_func
+                    ).item()
+                    loss_history_val.append(validation_loss)
 
         if track_epoch or track_history or lr_scheduler:
             train_loss = compute_loss(
