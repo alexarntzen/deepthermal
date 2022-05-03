@@ -137,7 +137,8 @@ def fit_FFNN(
     loss_func=nn.MSELoss(),
     compute_loss: callable = compute_loss_torch,
     max_nan_steps=50,
-    post_step: callable = None,
+    post_batch: callable = None,
+    post_epoch: callable = None,
     **kwargs,
 ) -> tuple[callable, np.array, np.array]:
     if init is not None:
@@ -191,76 +192,87 @@ def fit_FFNN(
         training_set = DataLoader(
             data, batch_size=batch_size, shuffle=True, drop_last=True
         )
-        for j, data_sample in enumerate(training_set):
+        # try one epoch, break if interupted:
+        try:
+            for j, data_sample in enumerate(training_set):
 
-            def closure():
-                # zero the parameter gradients
-                optimizer_.zero_grad()
-                # forward + backward + optimize
-                loss_u = compute_loss(
-                    model=model,
-                    data=data_sample,
-                    loss_func=loss_func,
-                )
-                loss_reg = regularization(model, regularization_exp)
-                loss = loss_u + regularization_param * loss_reg
-                loss.backward(retain_graph=True)
+                def closure():
+                    # zero the parameter gradients
+                    optimizer_.zero_grad()
+                    # forward + backward + optimize
+                    loss_u = compute_loss(
+                        model=model,
+                        data=data_sample,
+                        loss_func=loss_func,
+                    )
+                    loss_reg = regularization(model, regularization_exp)
+                    loss = loss_u + regularization_param * loss_reg
+                    loss.backward(retain_graph=True)
 
-                return loss
+                    return loss
 
-            optimizer_.step(closure=closure)
+                optimizer_.step(closure=closure)
 
-            if post_step is not None:
-                post_step(model=model, data=data)
+                if post_batch is not None:
+                    post_batch(model=model, data=data)
 
-            # track after each step if not track epoch
-            # assumes that the expected loss is
-            # not proportional to the length of training data
-            if track_history and not track_epoch:
-                # track training loss
+                # track after each step if not track epoch
+                # assumes that the expected loss is
+                # not proportional to the length of training data
+                if track_history and not track_epoch:
+                    # track training loss
+                    train_loss = compute_loss(
+                        model=model, data=data, loss_func=loss_func
+                    ).item()
+                    loss_history_train.append(train_loss)
+
+                    # track validation loss
+                    if data_val is not None and len(data_val) > 0 and track_history:
+                        validation_loss = compute_loss(
+                            model=model, data=data_val, loss_func=loss_func
+                        ).item()
+                        loss_history_val.append(validation_loss)
+
+            if post_epoch is not None:
+                post_epoch(model=model, data=data)
+
+            if track_epoch or track_history or lr_scheduler:
                 train_loss = compute_loss(
                     model=model, data=data, loss_func=loss_func
                 ).item()
-                loss_history_train.append(train_loss)
+                if track_history:
+                    # stop if nan output
+                    if np.isnan(train_loss):
+                        nan_steps += 1
+                    if epoch % 100 == 0:
+                        nan_steps = 0
 
-                # track validatoin loss
-                if data_val is not None and len(data_val) > 0 and track_history:
-                    validation_loss = compute_loss(
-                        model=model, data=data_val, loss_func=loss_func
-                    ).item()
-                    loss_history_val.append(validation_loss)
+                if lr_scheduler is not None:
+                    scheduler.step(train_loss)
 
-        if track_epoch or track_history or lr_scheduler:
-            train_loss = compute_loss(
-                model=model, data=data, loss_func=loss_func
-            ).item()
-            if track_history:
-                # stop if nan output
-                if np.isnan(train_loss):
-                    nan_steps += 1
-                if epoch % 100 == 0:
-                    nan_steps = 0
-
-            if lr_scheduler is not None:
-                scheduler.step(train_loss)
-
-            if track_epoch:
-                loss_history_train[epoch] = train_loss
+                if track_epoch:
+                    loss_history_train[epoch] = train_loss
+                    if data_val is not None and len(data_val) > 0:
+                        validation_loss = compute_loss(
+                            model=model,
+                            data=data_val,
+                            loss_func=loss_func,
+                        ).item()
+                        loss_history_val[epoch] = validation_loss
+            print_iter = epoch
+            if verbose and not epoch % verbose_interval and track_history:
+                print_iter = epoch if track_epoch else -1
+                print("Training Loss: ", np.round(loss_history_train[print_iter], 8))
                 if data_val is not None and len(data_val) > 0:
-                    validation_loss = compute_loss(
-                        model=model,
-                        data=data_val,
-                        loss_func=loss_func,
-                    ).item()
-                    loss_history_val[epoch] = validation_loss
-        print_iter = epoch
-        if verbose and not epoch % verbose_interval and track_history:
-            print_iter = epoch if track_epoch else -1
-            print("Training Loss: ", np.round(loss_history_train[print_iter], 8))
-            if data_val is not None and len(data_val) > 0:
-                print("Validation Loss: ", np.round(loss_history_val[print_iter], 8))
+                    print(
+                        "Validation Loss: ", np.round(loss_history_val[print_iter], 8)
+                    )
 
-        if nan_steps > max_nan_steps:
+            if nan_steps > max_nan_steps:
+                break
+
+        except KeyboardInterrupt:
+            print("Interrupted breaking")
             break
 
     if verbose and track_history and len(loss_history_train) > 0:

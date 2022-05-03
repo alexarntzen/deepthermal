@@ -122,7 +122,7 @@ class TestOnSimpleFunctionApprox(unittest.TestCase):
             "regularization_exp": [2],
             "regularization_param": [1e-6],
             "optimizer": ["ADAM"],
-            "learning_rate": [0.02],
+            "learning_rate": [0.01],
             "init_weight_seed": [25],
             "init": [init_xavier],
         }
