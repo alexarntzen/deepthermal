@@ -70,7 +70,7 @@ def plot_result_sorted(
     compare_label="data",
     fig: Figure = None,
 ) -> Figure:
-    if Figure is None:
+    if fig is None:
         fig, ax = plt.subplots(tight_layout=True)
     else:
         ax = fig.get_axes()[0]

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset, DataLoader
+from collections.abc import Iterable
 
 
 class TimeSeriesDataset(Dataset):
@@ -19,6 +20,13 @@ class TimeSeriesDataset(Dataset):
         self.step_2 = self.input_width + self.offset
 
     def __getitem__(self, index):
+        if isinstance(index, Iterable) and len(index.size()) > 0:
+            inputs, labels = [], []
+            for i in index:
+                input, label = self.__getitem__(i)
+                inputs.append(input)
+                labels.append(label)
+            return torch.stack(inputs), torch.stack(labels)
         if index < 0:
             raise IndexError("list index out of range")
         elif index < self.__len__():
@@ -56,8 +64,8 @@ def get_structured_prediction(
         for ti in range(i + data_input.step_1, i + data_input.step_2)
     ]
 
-    input_data_subset = torch.utils.data.Subset(data_input, data_indices)
-    input_data_ = torch.utils.data.DataLoader(
+    input_data_subset = Subset(data_input, data_indices)
+    input_data_ = DataLoader(
         input_data_subset, batch_size=len(input_data_subset), shuffle=False
     )
     input_data, _ = next(iter(input_data_))

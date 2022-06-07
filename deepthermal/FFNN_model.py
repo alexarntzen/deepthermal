@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from tqdm import tqdm
 from typing import Union, List
+from collections.abc import Callable
 
 # GLOBAL VARIABLES
 
@@ -114,6 +115,7 @@ def compute_loss_torch(
     x_train, y_train = data[:]
     y_pred = model(x_train)
     loss = loss_func(y_pred, y_train)
+    print(loss)
     return loss
 
 
@@ -130,21 +132,20 @@ def fit_FFNN(
     track_history=True,
     track_epoch=True,
     verbose=False,
-    verbose_interval=100,
     learning_rate=None,
     init_weight_seed: int = None,
     lr_scheduler=None,
     loss_func=nn.MSELoss(),
-    compute_loss: callable = compute_loss_torch,
+    compute_loss: Callable[..., torch.Tensor] = compute_loss_torch,
     max_nan_steps=50,
-    post_batch: callable = None,
-    post_epoch: callable = None,
+    post_batch: Callable = None,
+    post_epoch: Callable = None,
     **kwargs,
-) -> tuple[callable, np.array, np.array]:
+) -> tuple[Callable, np.array, np.array]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
 
-    if learning_rate is None:
+    if learning_rate is None and not callable(optimizer):
         learning_rate = larning_rates[optimizer]
     # select optimizer
     if optimizer == "ADAM":
@@ -169,7 +170,8 @@ def fit_FFNN(
             line_search_fn="strong_wolfe",
         )
         max_nan_steps = 2
-        verbose_interval = 1 if num_epochs < 10 else 5
+    elif callable(optimizer):
+        optimizer_ = optimizer(model.parameters())
     else:
         raise ValueError("Optimizer not recognized")
 
@@ -186,9 +188,10 @@ def fit_FFNN(
 
     nan_steps = 0
     # Loop over epochs
-    for epoch in tqdm(
+    epohcs_tqdm = tqdm(
         range(num_epochs), desc="Epoch: ", disable=(not verbose), leave=False
-    ):
+    )
+    for epoch in epohcs_tqdm:
         training_set = DataLoader(
             data, batch_size=batch_size, shuffle=True, drop_last=True
         )
@@ -207,7 +210,7 @@ def fit_FFNN(
                     )
                     loss_reg = regularization(model, regularization_exp)
                     loss = loss_u + regularization_param * loss_reg
-                    loss.backward(retain_graph=True)
+                    loss.backward()
 
                     return loss
 
@@ -259,15 +262,17 @@ def fit_FFNN(
                             loss_func=loss_func,
                         ).item()
                         loss_history_val[epoch] = validation_loss
-            print_iter = epoch
-            if verbose and not epoch % verbose_interval and track_history:
+            if verbose and track_history:
                 print_iter = epoch if track_epoch else -1
-                print("Training Loss: ", np.round(loss_history_train[print_iter], 8))
                 if data_val is not None and len(data_val) > 0:
-                    print(
-                        "Validation Loss: ", np.round(loss_history_val[print_iter], 8)
+                    epohcs_tqdm.set_postfix(
+                        loss=loss_history_train[print_iter],
+                        val_loss=loss_history_val[print_iter],
                     )
-
+                else:
+                    epohcs_tqdm.set_postfix(
+                        loss=loss_history_train[print_iter],
+                    )
             if nan_steps > max_nan_steps:
                 break
 
@@ -276,7 +281,7 @@ def fit_FFNN(
             break
 
     if verbose and track_history and len(loss_history_train) > 0:
-        print("Final training Loss: ", np.round(loss_history_train[-1], 8))
+        print("\nFinal training Loss: ", np.round(loss_history_train[-1], 8))
         if data_val is not None and len(data_val) > 0:
             print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
