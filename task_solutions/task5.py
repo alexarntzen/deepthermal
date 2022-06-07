@@ -2,7 +2,7 @@ import torch.utils.data
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import qmcpy.discrete_distribution.sobol.sobol as sobol
+from qmcpy.discrete_distribution import Sobol
 
 from deepthermal.FFNN_model import fit_FFNN
 from deepthermal.validation import (
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # create sobol starting points
     n_samples = 1000
-    x_sampling_sobol = sobol.Sobol(dimension=2, graycode=True)
+    x_sampling_sobol = Sobol(dimension=2, graycode=True)
     x_sample = torch.tensor(x_sampling_sobol.gen_samples(n_samples).astype(np.float32))
     x_test_ = x_sample * X_SCALE + X_CENTER
 

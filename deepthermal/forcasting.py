@@ -1,7 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, Subset, DataLoader
-from collections.abc import Iterable
 
 
 class TimeSeriesDataset(Dataset):
@@ -20,24 +20,29 @@ class TimeSeriesDataset(Dataset):
         self.step_2 = self.input_width + self.offset
 
     def __getitem__(self, index):
-        if isinstance(index, Iterable) and len(index.size()) > 0:
+        if (
+            (isinstance(index, np.ndarray) or isinstance(index, torch.Tensor))
+            and len(index.shape)
+        ) > 0 or isinstance(index, list):
             inputs, labels = [], []
             for i in index:
                 input, label = self.__getitem__(i)
                 inputs.append(input)
                 labels.append(label)
             return torch.stack(inputs), torch.stack(labels)
-        if index < 0:
-            raise IndexError("list index out of range")
-        elif index < self.__len__():
-            input_data = self.data[index : index + self.input_width]
-            label_data = self.data[index + self.step_1 : index + self.step_2]
-        elif self.__len__() <= index < self.max_len:
-            input_data = self.data[index : index + self.input_width]
-            label_data = torch.zeros_like(self.data)[self.step_1 : self.step_2]
-        elif self.max_len <= index:
-            raise IndexError("list index out of range")
-        return input_data, label_data
+        else:
+            if index < 0:
+                raise IndexError("list index out of range")
+            elif index < self.__len__():
+                input_data = self.data[index : index + self.input_width]
+                label_data = self.data[index + self.step_1 : index + self.step_2]
+                return input_data, label_data
+            elif self.__len__() <= index < self.max_len:
+                input_data = self.data[index : index + self.input_width]
+                label_data = torch.zeros_like(self.data)[self.step_1 : self.step_2]
+                return input_data, label_data
+            elif self.max_len <= index:
+                raise IndexError("list index out of range")
 
     def __len__(self):
         return self.data.size(0) - self.offset - (self.input_width - 1)

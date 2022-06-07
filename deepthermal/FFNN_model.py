@@ -115,7 +115,6 @@ def compute_loss_torch(
     x_train, y_train = data[:]
     y_pred = model(x_train)
     loss = loss_func(y_pred, y_train)
-    print(loss)
     return loss
 
 
@@ -192,11 +191,11 @@ def fit_FFNN(
         range(num_epochs), desc="Epoch: ", disable=(not verbose), leave=False
     )
     for epoch in epohcs_tqdm:
-        training_set = DataLoader(
-            data, batch_size=batch_size, shuffle=True, drop_last=True
-        )
-        # try one epoch, break if interupted:
         try:
+            # try one epoch, break if interupted:
+            training_set = DataLoader(
+                data, batch_size=batch_size, shuffle=True, drop_last=False
+            )
             for j, data_sample in enumerate(training_set):
 
                 def closure():
