@@ -6,7 +6,7 @@
 # Deepthermal
 Project for 401-4656-21L Deep Learning in Scientific Computing FS2021 at ETH Zürich. 
 
-Code from this project has been updated since i have used some of the functions in later projects. For the old project see the `old_usage` branch.  
+Code from this project has been updated since I have used some of the functions in later projects. For the old project see the `old_usage` branch.  
 
 The source files are placed `deepthermal/` directory.
 The programs generating solutions to tasks are placed in `task_solutions/`. Final model parameters are also placed in this folder.
